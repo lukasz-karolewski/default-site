@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   nextjs:
     build:
@@ -9,4 +7,4 @@ services:
       - "3080:3080"
     restart: unless-stopped
     volumes:
-      - /etc/caddy/Caddyfile:/Caddyfile:ro
+      - /etc/caddy/Caddyfile:/app/Caddyfile:ro
