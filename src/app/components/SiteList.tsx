@@ -1,40 +1,15 @@
 import SiteLink from './SiteLink';
 
-// Modified for rebuild
 async function getHosts() {
-  // Direct server-side API call
   try {
-    // Server components can directly access API functions
-    const fs = require('fs');
-    const path = require('path');
-    const readline = require('readline');
-    
-    const caddyfilePath = path.join(process.cwd(), 'Caddyfile');
-    const hosts: string[] = [];
-    
-    if (!fs.existsSync(caddyfilePath)) {
-      console.error('Caddyfile not found at:', caddyfilePath);
-      return [];
-    }
-    
-    const fileStream = fs.createReadStream(caddyfilePath);
-    const rl = readline.createInterface({
-      input: fileStream,
-      crlfDelay: Infinity
-    });
-    
-    const hostRegex = /^@(\w+)\s+.*host\s+([a-zA-Z0-9.-]+)/;
-    
-    for await (const line of rl) {
-      const match = line.match(hostRegex);
-      if (match) {
-        hosts.push(match[2]);
-      }
-    }
-    
-    return hosts;
+    // In Next.js App Router server components, we can directly use the API 
+    // route handler function - this is the most reliable approach
+    const { GET } = await import('../api/hosts/route');
+    const response = await GET();
+    const data = await response.json();
+    return data.hosts || [];
   } catch (error) {
-    console.error('Error reading Caddyfile:', error);
+    console.error('Error fetching hosts:', error);
     return [];
   }
 }

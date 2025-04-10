@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:23-alpine AS base
 
 # Step 1: Install dependencies and build the app
 FROM base AS builder
