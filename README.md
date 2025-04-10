@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Default Site for Caddy Server
 
-## Getting Started
+A clean, simple Next.js app that displays a list of sites configured in a Caddy server. This serves as a default landing page when accessing the IP address directly.
 
-First, run the development server:
+## Features
+
+- Reads the Caddyfile mounted in the container
+- Automatically discovers and displays all hosts configured in Caddy
+- Clean, responsive interface with direct links to all sites
+- Built with Next.js App Router and Tailwind CSS
+- Server-side rendering for optimal performance
+
+## Docker Setup
+
+The application runs in a Docker container and requires access to the Caddy configuration file.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/lukasz-karolewski/default-site.git
+cd default-site
+
+# Build and run with Docker Compose
+docker-compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app will be available at http://localhost:3080
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Docker configuration:
+- Mounts the Caddyfile as read-only at the root of the application
+- Exposes port 3080 to avoid conflicts with other services
+- Uses a multi-stage build process for optimized container size
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Install dependencies
+npm install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run in development mode
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How It Works
 
-## Deploy on Vercel
+The application scans the Caddyfile looking for lines starting with `@` that contain a `host` directive. It extracts the hostname and displays them as clickable links.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Example Caddyfile pattern it recognizes:
+```
+@name host example.com
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
