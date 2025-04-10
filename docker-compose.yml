@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3080:3080"
     restart: unless-stopped
     volumes:
       - /etc/caddy/Caddyfile:/Caddyfile:ro
