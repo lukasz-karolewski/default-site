@@ -1,4 +1,4 @@
-FROM node:23-alpine AS base
+FROM node:slim AS base
 
 # Step 1: Install dependencies and build the app
 FROM base AS builder
@@ -12,12 +12,14 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
 # Copy only the necessary files from the standalone output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-ENV NODE_ENV=production
 ENV PORT=3080
 EXPOSE 3080
 

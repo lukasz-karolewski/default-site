@@ -1,17 +1,8 @@
 import SiteLink from './SiteLink';
+import { parseHosts } from '../utils/hosts';
 
 async function getHosts() {
-  try {
-    // In Next.js App Router server components, we can directly use the API 
-    // route handler function - this is the most reliable approach
-    const { GET } = await import('../api/hosts/route');
-    const response = await GET();
-    const data = await response.json();
-    return data.hosts || [];
-  } catch (error) {
-    console.error('Error fetching hosts:', error);
-    return [];
-  }
+  return parseHosts();
 }
 
 export default async function SiteList() {

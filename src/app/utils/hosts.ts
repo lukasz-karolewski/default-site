@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
 import fs from 'fs';
-import path from 'path';
 import readline from 'readline';
 
-export async function GET() {
+export async function parseHosts() {
   try {
-    const caddyfilePath = path.join(process.cwd(), 'Caddyfile');
+    const caddyfilePath = 'Caddyfile';
+    
+    if (!fs.existsSync(caddyfilePath)) {
+      console.error(`Caddyfile not found at ${caddyfilePath}`);
+      return [];
+    }
+    
     const hosts: string[] = [];
     
     // Create a readline interface to read the file line by line
@@ -26,12 +30,9 @@ export async function GET() {
       }
     }
     
-    return NextResponse.json({ hosts });
+    return hosts;
   } catch (error) {
-    console.error('Error reading Caddyfile:', error);
-    return NextResponse.json(
-      { error: 'Failed to read Caddyfile' },
-      { status: 500 }
-    );
+    console.error('Error parsing hosts:', error);
+    return [];
   }
 }
