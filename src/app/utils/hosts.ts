@@ -1,38 +1,21 @@
-import fs from 'fs';
-import readline from 'readline';
+import { getAllRedirects, Redirect } from '../lib/database';
 
-export async function parseHosts() {
+export async function parseHosts(): Promise<string[]> {
   try {
-    const caddyfilePath = 'Caddyfile';
-    
-    if (!fs.existsSync(caddyfilePath)) {
-      console.error(`Caddyfile not found at ${caddyfilePath}`);
-      return [];
-    }
-    
-    const hosts: string[] = [];
-    
-    // Create a readline interface to read the file line by line
-    const fileStream = fs.createReadStream(caddyfilePath);
-    const rl = readline.createInterface({
-      input: fileStream,
-      crlfDelay: Infinity
-    });
-    
-    // Regular expression to match lines starting with @ containing "host"
-    const hostRegex = /^@(\w+)\s+.*host\s+([a-zA-Z0-9.-]+)/;
-    
-    // Process each line
-    for await (const line of rl) {
-      const match = line.match(hostRegex);
-      if (match) {
-        hosts.push(match[2]);
-      }
-    }
-    
-    return hosts;
+    // Get hosts from database instead of parsing Caddyfile
+    const redirects = getAllRedirects();
+    return redirects.map((redirect: Redirect) => redirect.host);
   } catch (error) {
-    console.error('Error parsing hosts:', error);
+    console.error('Error getting hosts from database:', error);
+    return [];
+  }
+}
+
+export async function getRedirects(): Promise<Redirect[]> {
+  try {
+    return getAllRedirects();
+  } catch (error) {
+    console.error('Error getting redirects from database:', error);
     return [];
   }
 }
