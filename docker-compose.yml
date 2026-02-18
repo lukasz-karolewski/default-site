@@ -8,6 +8,7 @@ services:
     restart: unless-stopped
     environment:
       - CADDY_API=http://host.docker.internal:2019
+      - BASE_DOMAIN=mtando.com
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

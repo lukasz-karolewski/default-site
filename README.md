@@ -1,95 +1,181 @@
-# Default Site for Caddy Server
+# default-site
 
-A clean, simple Next.js app that displays a list of sites configured in a Caddy server. This serves as a default landing page when accessing the IP address directly.
+A self-hosted dashboard and Caddyfile manager for a homelab reverse proxy. It runs as a Docker container alongside Caddy, provides a UI for adding and removing subdomain routes, and writes a single wildcard-block Caddyfile that Caddy reloads live via its Admin API.
 
-## Context
+## How it works
 
-This application is designed to work with a Caddy server setup that provides HTTPS for locally deployed services that are only accessible from the local network. The Caddy configuration uses the [wildcard certificates pattern](https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates) and obtains certificates through the Route53 DNS module for automated certificate management.
+All services live as subdomains under one domain (e.g. `ha.example.com`, `wg.example.com`). Caddy issues a single wildcard TLS certificate (`*.example.com` + `example.com`) via DNS challenge, which means every new subdomain you add is instantly covered — no per-service cert needed.
 
-This setup allows you to:
-- Access local services via secure HTTPS connections
-- Use real domain names with valid SSL certificates in your local environment
-- Provide a clean landing page that lists all available services
+This app owns the Caddyfile. It stores your routes in a local SQLite database, and whenever you add or remove a site through the UI, it regenerates the Caddyfile and pushes it to Caddy's Admin API, which reloads configuration without dropping connections. The root domain (`example.com`) is always routed to this app itself.
 
-## Features
+Generated Caddyfile shape:
 
-- Reads the Caddyfile mounted in the container
-- Automatically discovers and displays all hosts configured in Caddy
-- Clean, responsive interface with direct links to all sites
-- Built with Next.js App Router and Tailwind CSS
-- Server-side rendering for optimal performance
+```
+# Managed by default-site — do not edit manually.
+# Use Caddyfile.custom for TLS, logging, and other options inside the site block.
 
-## Docker Setup
+*.example.com, example.com {
+    import /app/Caddyfile.custom
 
-The application runs in a Docker container and requires access to the Caddy configuration file.
+    @ha host ha.example.com
+    handle @ha {
+        reverse_proxy localhost:8123
+    }
+
+    @wg host wg.example.com
+    handle @wg {
+        reverse_proxy localhost:8888
+    }
+
+    handle {
+        reverse_proxy localhost:3080
+    }
+}
+```
+
+TLS configuration, logging, and any other Caddy directives that belong inside the site block go in `Caddyfile.custom`. That file is yours — it is never overwritten.
+
+## Prerequisites
+
+- **Caddy** with a DNS challenge plugin installed on the host (e.g. [`caddy-dns/route53`](https://github.com/caddy-dns/route53) for AWS Route 53)
+- **Docker** and Docker Compose on the same host
+- A domain with DNS managed by your chosen provider
+- Caddy's Admin API enabled and reachable from the container (default: `localhost:2019`)
+
+## Host Caddy setup
+
+### 1. Install Caddy with your DNS plugin
+
+Build or download Caddy with the DNS provider module for your registrar. With `xcaddy`:
 
 ```bash
-# Clone the repository
-git clone https://github.com/lukasz-karolewski/default-site.git
-cd default-site
-
-# Build and run with Docker Compose
-docker-compose up -d
+xcaddy build --with github.com/caddy-dns/route53
 ```
 
-The app will be available at http://localhost:3080
+### 2. Create `/etc/caddy/Caddyfile.custom`
 
-## Configuration
-
-The Docker configuration:
-- Mounts the Caddyfile as read-only at the root of the application
-- Exposes port 3080 to avoid conflicts with other services
-- Uses a multi-stage build process for optimized container size
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev
-```
-
-## How It Works
-
-The application scans the Caddyfile looking for lines starting with `@` that contain a `host` directive. It extracts the hostname and displays them as clickable links.
-
-Example Caddyfile pattern it recognizes:
-```
-@name host example.com
-```
-
-### Caddy Configuration Example
-
-This app is designed to work with a Caddy setup similar to:
+This file is imported inside the wildcard block and is where you put TLS config, logging, and anything else. Create it before first run — if it does not exist, the app will create an empty one:
 
 ```
-{
-    # Use Route53 for DNS challenges with wildcard certificates
-    acme_dns route53 {
+tls {
+    dns route53 {
         region us-east-1
     }
 }
 
-# Default site that shows all available services
-:80, :443 {
-    respond "Default site"
-}
+log
+```
 
-# Example of a service definition that this app will detect
-@ha host ha.example.com
-handle @ha {
-    reverse_proxy homeassistant:8123
-}
+### 3. Enable the Caddy Admin API
 
-@dashboard host dashboard.example.com
-handle @dashboard {
-    reverse_proxy grafana:3000
+In your global Caddy options block (before any site blocks), make sure the Admin API is listening. By default it binds to `localhost:2019`, which is what the Docker container reaches via `host.docker.internal`:
+
+```
+{
+    admin localhost:2019
 }
 ```
 
-The app will find `ha.example.com` and `dashboard.example.com` from this configuration and display them as clickable links.
+### 4. Grant write access to `/etc/caddy/Caddyfile`
+
+The container mounts `/etc/caddy/Caddyfile` read-write. Caddy must be able to read it after the container writes it. The simplest approach is to make the file world-readable and owned by the caddy user:
+
+```bash
+sudo touch /etc/caddy/Caddyfile
+sudo chown caddy:caddy /etc/caddy/Caddyfile
+sudo chmod 664 /etc/caddy/Caddyfile
+```
+
+## Deployment
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/lukasz-karolewski/default-site.git
+cd default-site
+```
+
+### 2. Configure `docker-compose.yml`
+
+Set `BASE_DOMAIN` to your domain:
+
+```yaml
+environment:
+  - CADDY_API=http://host.docker.internal:2019
+  - BASE_DOMAIN=example.com
+```
+
+### 3. Start the container
+
+```bash
+docker compose up -d
+```
+
+On first start, the app:
+1. Checks whether the SQLite database already has sites.
+2. If empty, attempts to import existing routes from `/app/sites.caddy`, then falls back to parsing the existing `/app/Caddyfile`.
+3. Writes the generated Caddyfile and calls the Caddy Admin API to reload.
+
+The dashboard is available at `http://<host>:3080` and, once Caddy reloads, at `https://example.com`.
+
+### 4. Add your DNS wildcard record
+
+Point `*.example.com` and `example.com` to your server's IP. Caddy will obtain the wildcard certificate automatically on first request (or on startup if you configured `tls` eagerly).
+
+## Migrating from an existing Caddyfile
+
+If you have an existing Caddyfile with named matchers in the format the app understands:
+
+```
+@ha host ha.example.com
+reverse_proxy @ha localhost:8123
+```
+
+Place it at `/etc/caddy/Caddyfile` (or `/etc/caddy/sites.caddy`) before starting the container. On first run, the app parses it, imports the sites into SQLite, then takes over management of the Caddyfile.
+
+## Environment variables
+
+| Variable            | Default                   | Description |
+|---------------------|---------------------------|-------------|
+| `BASE_DOMAIN`       | *(required)*              | Root domain for the wildcard block (e.g. `example.com`) |
+| `CADDY_API`         | `http://localhost:2019`   | URL of the Caddy Admin API |
+| `CADDY_CUSTOM_FILE` | `/app/Caddyfile.custom`   | Path to the custom config imported inside the wildcard block |
+| `DASHBOARD_UPSTREAM`| `localhost:3080`          | Upstream for the root domain catchall (this app) |
+| `CADDYFILE_PATH`    | `/app/Caddyfile`          | Path to the generated Caddyfile (must be volume-mounted to `/etc/caddy/Caddyfile`) |
+
+## Development
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm test           # vitest
+npm run build      # production build
+```
+
+For local development, `BASE_DOMAIN` must be set in your environment or a `.env.local` file:
+
+```bash
+BASE_DOMAIN=test.com npm run dev
+```
+
+## Architecture
+
+```
+Browser → UI (Next.js App Router)
+           │
+           ▼
+      /api/sites (REST)
+           │
+           ▼
+      SQLite (sites_data volume)
+           │
+           ▼
+      generateCaddyfile()   ← reads BASE_DOMAIN, CADDY_CUSTOM_FILE
+           │
+           ├── writes /app/Caddyfile  (→ /etc/caddy/Caddyfile on host)
+           │
+           └── POST /load → Caddy Admin API  (live reload, no downtime)
+```
 
 ## License
 
