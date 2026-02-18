@@ -1,10 +1,10 @@
 import { getSites } from './siteService';
 
-export async function generateCaddyfile() {
+const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
+
+export async function generateCaddyfile(): Promise<string> {
   const sites = await getSites();
-  let caddyfile = '';
-  for (const site of sites) {
-    caddyfile += `@${site.host} host ${site.host}\nreverse_proxy @${site.host} ${site.upstream}\n`;
-  }
-  return caddyfile;
+  const blocks = sites.map(s => `${s.host} {\n\treverse_proxy ${s.upstream}\n}`);
+  const header = `# Managed by default-site — do not edit manually.\n# Use Caddyfile.custom for global options, TLS config, and extra blocks.\n\nimport ${CADDY_CUSTOM_FILE}\n`;
+  return header + (blocks.length ? '\n' + blocks.join('\n\n') + '\n' : '');
 }

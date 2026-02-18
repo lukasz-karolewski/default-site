@@ -1,0 +1,64 @@
+import fs from 'fs/promises';
+import { getSites, addSite } from './siteService';
+import { applyCaddyConfig } from './caddyApi';
+
+const CADDYFILE_PATH = process.env.CADDYFILE_PATH ?? '/app/Caddyfile';
+const CADDY_SITES_FILE = process.env.CADDY_SITES_FILE ?? '/app/sites.caddy';
+const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
+
+export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
+  const pattern = /@[\w.-]+\s+host\s+([\w.\-]+)\s*\nreverse_proxy\s+@[\w.-]+\s+([\w.:\-]+)/gm;
+  const results: Array<{ host: string; upstream: string }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(content)) !== null) {
+    results.push({ host: match[1], upstream: match[2] });
+  }
+  return results;
+}
+
+export async function runFirstTimeSetup(): Promise<void> {
+  const existing = await getSites();
+  if (existing.length > 0) return;
+
+  let sites: Array<{ host: string; upstream: string }> = [];
+
+  try {
+    const content = await fs.readFile(CADDY_SITES_FILE, 'utf8');
+    if (content.trim()) {
+      sites = parseSitesFromCaddy(content);
+    }
+  } catch {
+    // file doesn't exist or unreadable — skip
+  }
+
+  if (sites.length === 0) {
+    try {
+      const content = await fs.readFile(CADDYFILE_PATH, 'utf8');
+      sites = parseSitesFromCaddy(content);
+    } catch {
+      // file doesn't exist or unreadable — skip
+    }
+  }
+
+  const seen = new Set<string>();
+  const unique = sites.filter(s => {
+    if (seen.has(s.host)) return false;
+    seen.add(s.host);
+    return true;
+  });
+
+  for (const site of unique) {
+    await addSite(site.host, site.upstream);
+  }
+
+  try {
+    await fs.stat(CADDY_CUSTOM_FILE);
+  } catch (err: unknown) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      await fs.writeFile(CADDY_CUSTOM_FILE, '', 'utf8');
+    }
+  }
+
+  await applyCaddyConfig();
+  console.log(`[first-run] initialized with ${unique.length} site(s)`);
+}
