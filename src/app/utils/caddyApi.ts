@@ -1,14 +1,20 @@
-import fetch from 'node-fetch';
-import { generateCaddyfile } from './caddyfileGen';
+import { getSites } from './siteService';
 import fs from 'fs/promises';
 
-const CADDY_API = 'http://localhost:2019';
+const CADDY_API = process.env.CADDY_API ?? 'http://host.docker.internal:2019';
+const CADDY_SITES_FILE = process.env.CADDY_SITES_FILE ?? '/app/sites.caddy';
+const CADDYFILE_PATH = process.env.CADDYFILE_PATH ?? '/app/Caddyfile';
 
 export async function applyCaddyConfig() {
-  const caddyfile = await generateCaddyfile();
-  await fs.writeFile('Caddyfile', caddyfile, 'utf8');
+  const sites = await getSites();
 
-  // Convert Caddyfile to JSON using Caddy API
+  let siteBlocks = '';
+  for (const site of sites) {
+    siteBlocks += `@${site.host} host ${site.host}\nreverse_proxy @${site.host} ${site.upstream}\n\n`;
+  }
+  await fs.writeFile(CADDY_SITES_FILE, siteBlocks, 'utf8');
+
+  const caddyfile = await fs.readFile(CADDYFILE_PATH, 'utf8');
   const resp = await fetch(`${CADDY_API}/load`, {
     method: 'POST',
     headers: { 'Content-Type': 'text/caddyfile' },
