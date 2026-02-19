@@ -7,12 +7,27 @@ const CADDY_SITES_FILE = process.env.CADDY_SITES_FILE ?? '/app/sites.caddy';
 const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
 
 export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
-  const pattern = /@[\w.-]+\s+host\s+([\w.\-]+)\s*\nreverse_proxy\s+@[\w.-]+\s+([\w.:\-]+)/gm;
   const results: Array<{ host: string; upstream: string }> = [];
+
+  // Match simple format:
+  // @name host example.com
+  // reverse_proxy @name localhost:8123
+  const simplePattern = /@([\w.-]+)\s+host\s+([\w.\-]+)\s*\n\s*reverse_proxy\s+@\1\s+([\w.:\-]+)/gm;
   let match: RegExpExecArray | null;
-  while ((match = pattern.exec(content)) !== null) {
-    results.push({ host: match[1], upstream: match[2] });
+  while ((match = simplePattern.exec(content)) !== null) {
+    results.push({ host: match[2], upstream: match[3] });
   }
+
+  // Match handle format:
+  // @name host example.com
+  // handle @name {
+  //   reverse_proxy localhost:8123
+  // }
+  const handlePattern = /@([\w.-]+)\s+host\s+([\w.\-]+)\s*\n\s*handle\s+@\1\s*{\s*\n\s*reverse_proxy\s+([\w.:\-]+)/gm;
+  while ((match = handlePattern.exec(content)) !== null) {
+    results.push({ host: match[2], upstream: match[3] });
+  }
+
   return results;
 }
 
