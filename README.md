@@ -61,6 +61,12 @@ tls internal
 log
 ```
 
+Ensure this path is a regular file, not a directory:
+
+```bash
+ls -ld /etc/caddy/Caddyfile.custom
+```
+
 Example custom configuration:
 
 ```
@@ -75,12 +81,20 @@ log
 
 ### 3. Enable the Caddy Admin API
 
-In your global Caddy options block (before any site blocks), make sure the Admin API is listening. By default it binds to `localhost:2019`, which is what the Docker container reaches via `host.docker.internal`:
+In your global Caddy options block (before any site blocks), make sure the Admin API is listening on an address reachable from the container:
 
 ```
 {
-    admin localhost:2019
+    admin 0.0.0.0:2019
 }
+```
+
+Then validate and start Caddy:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl start caddy
+sudo systemctl enable caddy
 ```
 
 ### 4. Grant write access to `/etc/caddy/Caddyfile`
@@ -117,6 +131,13 @@ environment:
 docker compose up -d
 ```
 
+Recommended preflight checks:
+
+```bash
+curl http://localhost:2019/config/
+ls -l /etc/caddy/Caddyfile /etc/caddy/Caddyfile.custom
+```
+
 On first start, the app:
 1. Checks whether the SQLite database already has sites.
 2. If empty, parses existing routes from `/app/Caddyfile`.
@@ -138,6 +159,63 @@ reverse_proxy @ha localhost:8123
 ```
 
 Place it at `/etc/caddy/Caddyfile` before starting the container. On first run, the app parses it, imports the sites into SQLite, then takes over management of the Caddyfile.
+
+## Troubleshooting
+
+### Docker mount error: `... /app/Caddyfile.custom ... not a directory`
+
+This means host and container mount types do not match.
+
+1. Ensure `/etc/caddy/Caddyfile.custom` is a file:
+
+```bash
+ls -ld /etc/caddy/Caddyfile.custom
+```
+
+2. If it is a directory, replace it with a file:
+
+```bash
+sudo mv /etc/caddy/Caddyfile.custom /etc/caddy/Caddyfile.custom.dir.bak
+sudo touch /etc/caddy/Caddyfile.custom
+sudo chown caddy:caddy /etc/caddy/Caddyfile.custom
+sudo chmod 664 /etc/caddy/Caddyfile.custom
+```
+
+3. Recreate containers:
+
+```bash
+docker compose down --remove-orphans
+docker compose up --force-recreate
+```
+
+### Startup crash: `ECONNREFUSED ... :2019` / `Failed to prepare server`
+
+The app failed to reach Caddy Admin API during startup.
+
+1. Check Caddy service status:
+
+```bash
+systemctl is-active caddy
+systemctl status caddy --no-pager -n 40
+```
+
+2. Start Caddy if inactive:
+
+```bash
+sudo systemctl start caddy
+```
+
+3. Confirm API reachability:
+
+```bash
+curl http://localhost:2019/config/
+```
+
+4. Restart app container:
+
+```bash
+docker compose up --force-recreate
+```
 
 ## Environment variables
 
