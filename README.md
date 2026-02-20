@@ -101,7 +101,6 @@ Set `BASE_DOMAIN` to your domain:
 
 ```yaml
 environment:
-  - CADDY_API=http://host.docker.internal:2019
   - BASE_DOMAIN=example.com
 ```
 
