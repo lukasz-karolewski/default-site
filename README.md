@@ -54,7 +54,14 @@ xcaddy build --with github.com/caddy-dns/route53
 
 ### 2. Create `/etc/caddy/Caddyfile.custom`
 
-This file is imported inside the wildcard block and is where you put TLS config, logging, and anything else. Create it before first run — if it does not exist, the app will create an empty one:
+This file is imported inside the wildcard block and is where you put TLS config, logging, and anything else. Create it before first run — if it does not exist, the app will create it with:
+
+```
+tls internal
+log
+```
+
+Example custom configuration:
 
 ```
 tls {

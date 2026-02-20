@@ -5,6 +5,9 @@ import { applyCaddyConfig } from './caddyApi';
 const CADDYFILE_PATH = process.env.CADDYFILE_PATH ?? '/app/Caddyfile';
 const CADDYFILE_BACKUP_PATH = `${CADDYFILE_PATH}.bak`;
 const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
+const DEFAULT_CADDY_CUSTOM_CONTENT = `tls internal
+log
+`;
 
 export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
   const results: Array<{ host: string; upstream: string }> = [];
@@ -61,7 +64,7 @@ export async function runFirstTimeSetup(): Promise<void> {
     await fs.stat(CADDY_CUSTOM_FILE);
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      await fs.writeFile(CADDY_CUSTOM_FILE, '', 'utf8');
+      await fs.writeFile(CADDY_CUSTOM_FILE, DEFAULT_CADDY_CUSTOM_CONTENT, 'utf8');
     }
   }
 

@@ -142,7 +142,7 @@ describe('runFirstTimeSetup', () => {
 
     expect(mockWriteFile).toHaveBeenCalledWith(
       expect.stringContaining('Caddyfile.custom'),
-      '',
+      'tls internal\nlog\n',
       'utf8',
     );
   });
