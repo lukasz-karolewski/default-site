@@ -113,7 +113,7 @@ docker compose up -d
 On first start, the app:
 1. Checks whether the SQLite database already has sites.
 2. If empty, parses existing routes from `/app/Caddyfile`.
-3. Writes the generated Caddyfile and calls the Caddy Admin API to reload.
+3. Backs up `/app/Caddyfile` to `/app/Caddyfile.bak` (when present), then writes the generated Caddyfile and calls the Caddy Admin API to reload.
 
 The dashboard is available at `http://<host>:3080` and, once Caddy reloads, at `https://example.com`.
 

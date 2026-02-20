@@ -3,6 +3,7 @@ import { getSites, addSite } from './siteService';
 import { applyCaddyConfig } from './caddyApi';
 
 const CADDYFILE_PATH = process.env.CADDYFILE_PATH ?? '/app/Caddyfile';
+const CADDYFILE_BACKUP_PATH = `${CADDYFILE_PATH}.bak`;
 const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
 
 export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
@@ -62,6 +63,13 @@ export async function runFirstTimeSetup(): Promise<void> {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       await fs.writeFile(CADDY_CUSTOM_FILE, '', 'utf8');
     }
+  }
+
+  try {
+    await fs.copyFile(CADDYFILE_PATH, CADDYFILE_BACKUP_PATH);
+  } catch (err: unknown) {
+    // If no Caddyfile exists yet, there is nothing to back up.
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
   }
 
   await applyCaddyConfig();

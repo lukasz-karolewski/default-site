@@ -10,10 +10,12 @@ vi.mock('fs/promises', () => ({
     readFile: vi.fn(),
     writeFile: vi.fn(),
     stat: vi.fn(),
+    copyFile: vi.fn(),
   },
   readFile: vi.fn(),
   writeFile: vi.fn(),
   stat: vi.fn(),
+  copyFile: vi.fn(),
 }));
 
 vi.mock('../caddyApi', () => ({
@@ -30,6 +32,7 @@ const mockAddSite = vi.mocked(addSite);
 const mockReadFile = vi.mocked(fs.readFile);
 const mockWriteFile = vi.mocked(fs.writeFile);
 const mockStat = vi.mocked(fs.stat);
+const mockCopyFile = vi.mocked(fs.copyFile);
 const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
 
 const ENOENT = Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' });
@@ -73,6 +76,7 @@ describe('runFirstTimeSetup', () => {
     mockAddSite.mockResolvedValue(undefined as never);
     mockApplyCaddyConfig.mockResolvedValue(true);
     mockStat.mockResolvedValue({} as never);
+    mockCopyFile.mockResolvedValue(undefined as never);
   });
 
   it('skips setup when DB already has sites', async () => {
@@ -81,6 +85,7 @@ describe('runFirstTimeSetup', () => {
     await runFirstTimeSetup();
 
     expect(mockAddSite).not.toHaveBeenCalled();
+    expect(mockCopyFile).not.toHaveBeenCalled();
     expect(mockApplyCaddyConfig).not.toHaveBeenCalled();
   });
 
@@ -92,6 +97,7 @@ describe('runFirstTimeSetup', () => {
 
     expect(mockAddSite).toHaveBeenCalledOnce();
     expect(mockAddSite).toHaveBeenCalledWith('example.com', 'localhost:3000');
+    expect(mockCopyFile).toHaveBeenCalledWith('/app/Caddyfile', '/app/Caddyfile.bak');
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
@@ -113,6 +119,17 @@ describe('runFirstTimeSetup', () => {
     await runFirstTimeSetup();
 
     expect(mockAddSite).not.toHaveBeenCalled();
+    expect(mockCopyFile).toHaveBeenCalledWith('/app/Caddyfile', '/app/Caddyfile.bak');
+    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
+  });
+
+  it('continues when Caddyfile does not exist to back up', async () => {
+    mockGetSites.mockResolvedValue([]);
+    mockReadFile.mockResolvedValue('' as never);
+    mockCopyFile.mockRejectedValue(ENOENT);
+
+    await runFirstTimeSetup();
+
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
