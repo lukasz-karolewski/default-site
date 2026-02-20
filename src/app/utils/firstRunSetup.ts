@@ -3,7 +3,6 @@ import { getSites, addSite } from './siteService';
 import { applyCaddyConfig } from './caddyApi';
 
 const CADDYFILE_PATH = process.env.CADDYFILE_PATH ?? '/app/Caddyfile';
-const CADDY_SITES_FILE = process.env.CADDY_SITES_FILE ?? '/app/sites.caddy';
 const CADDY_CUSTOM_FILE = process.env.CADDY_CUSTOM_FILE ?? '/app/Caddyfile.custom';
 
 export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
@@ -38,21 +37,12 @@ export async function runFirstTimeSetup(): Promise<void> {
   let sites: Array<{ host: string; upstream: string }> = [];
 
   try {
-    const content = await fs.readFile(CADDY_SITES_FILE, 'utf8');
+    const content = await fs.readFile(CADDYFILE_PATH, 'utf8');
     if (content.trim()) {
       sites = parseSitesFromCaddy(content);
     }
   } catch {
     // file doesn't exist or unreadable — skip
-  }
-
-  if (sites.length === 0) {
-    try {
-      const content = await fs.readFile(CADDYFILE_PATH, 'utf8');
-      sites = parseSitesFromCaddy(content);
-    } catch {
-      // file doesn't exist or unreadable — skip
-    }
   }
 
   const seen = new Set<string>();

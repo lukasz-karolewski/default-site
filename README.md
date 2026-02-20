@@ -113,7 +113,7 @@ docker compose up -d
 
 On first start, the app:
 1. Checks whether the SQLite database already has sites.
-2. If empty, attempts to import existing routes from `/app/sites.caddy`, then falls back to parsing the existing `/app/Caddyfile`.
+2. If empty, parses existing routes from `/app/Caddyfile`.
 3. Writes the generated Caddyfile and calls the Caddy Admin API to reload.
 
 The dashboard is available at `http://<host>:3080` and, once Caddy reloads, at `https://example.com`.
@@ -131,7 +131,7 @@ If you have an existing Caddyfile with named matchers in the format the app unde
 reverse_proxy @ha localhost:8123
 ```
 
-Place it at `/etc/caddy/Caddyfile` (or `/etc/caddy/sites.caddy`) before starting the container. On first run, the app parses it, imports the sites into SQLite, then takes over management of the Caddyfile.
+Place it at `/etc/caddy/Caddyfile` before starting the container. On first run, the app parses it, imports the sites into SQLite, then takes over management of the Caddyfile.
 
 ## Environment variables
 

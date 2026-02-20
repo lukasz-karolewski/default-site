@@ -34,7 +34,6 @@ const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
 
 const ENOENT = Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' });
 
-const SITES_CADDY_CONTENT = '@example.com host example.com\nreverse_proxy @example.com localhost:3000\n';
 const CADDYFILE_CONTENT = '@alpha.com host alpha.com\nreverse_proxy @alpha.com localhost:3001\n';
 
 describe('parseSitesFromCaddy', () => {
@@ -61,7 +60,7 @@ describe('parseSitesFromCaddy', () => {
   });
 
   it('ignores unrelated lines and only extracts matched sites', () => {
-    const content = 'www.example.com {\n  import /app/sites.caddy\n}\n@foo.com host foo.com\nreverse_proxy @foo.com localhost:9000';
+    const content = 'www.example.com {\n  log\n}\n@foo.com host foo.com\nreverse_proxy @foo.com localhost:9000';
     expect(parseSitesFromCaddy(content)).toEqual([
       { host: 'foo.com', upstream: 'localhost:9000' },
     ]);
@@ -85,12 +84,9 @@ describe('runFirstTimeSetup', () => {
     expect(mockApplyCaddyConfig).not.toHaveBeenCalled();
   });
 
-  it('imports sites from sites.caddy when it has content (Case A)', async () => {
+  it('imports sites from Caddyfile when it has content', async () => {
     mockGetSites.mockResolvedValue([]);
-    mockReadFile.mockImplementation(async (path) => {
-      if (String(path).endsWith('sites.caddy')) return SITES_CADDY_CONTENT as never;
-      throw ENOENT;
-    });
+    mockReadFile.mockResolvedValue('@example.com host example.com\nreverse_proxy @example.com localhost:3000\n' as never);
 
     await runFirstTimeSetup();
 
@@ -99,13 +95,9 @@ describe('runFirstTimeSetup', () => {
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
-  it('falls back to Caddyfile when sites.caddy is empty (Case B)', async () => {
+  it('imports sites from Caddyfile', async () => {
     mockGetSites.mockResolvedValue([]);
-    mockReadFile.mockImplementation(async (path) => {
-      if (String(path).endsWith('sites.caddy')) return '   ' as never;
-      if (String(path).endsWith('Caddyfile')) return CADDYFILE_CONTENT as never;
-      throw ENOENT;
-    });
+    mockReadFile.mockResolvedValue(CADDYFILE_CONTENT as never);
 
     await runFirstTimeSetup();
 
@@ -114,7 +106,7 @@ describe('runFirstTimeSetup', () => {
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
-  it('imports no sites when both files are empty (Case C)', async () => {
+  it('imports no sites when Caddyfile is empty', async () => {
     mockGetSites.mockResolvedValue([]);
     mockReadFile.mockResolvedValue('   ' as never);
 
