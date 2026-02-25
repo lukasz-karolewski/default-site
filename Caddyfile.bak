@@ -1,0 +1,16 @@
+{
+    admin 0.0.0.0:2019 {
+        origins host.docker.internal:2019 localhost:2019 127.0.0.1:2019
+    }
+}
+
+# Managed by default-site — do not edit manually.
+# Use Caddyfile.custom for TLS, logging, and other options inside the site block.
+
+*.lk-pc.localdomain, lk-pc.localdomain {
+	import /home/lk/sources/default-site/Caddyfile.custom
+
+	handle {
+		reverse_proxy localhost:3080
+	}
+}
