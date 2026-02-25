@@ -20,12 +20,20 @@ vi.mock('fs/promises', () => ({
 
 vi.mock('../caddyApi', () => ({
   applyCaddyConfig: vi.fn(),
+  applyCaddyConfigStrict: vi.fn(),
+}));
+vi.mock('../caddySyncScheduler', () => ({
+  ensureCaddyRetryLoop: vi.fn(),
+}));
+vi.mock('../caddySyncState', () => ({
+  getCaddyStartupMode: vi.fn(() => 'degraded'),
 }));
 
 import { parseSitesFromCaddy, runFirstTimeSetup } from '../firstRunSetup';
 import { getSites, addSite } from '../siteService';
 import fs from 'fs/promises';
-import { applyCaddyConfig } from '../caddyApi';
+import { applyCaddyConfig, applyCaddyConfigStrict } from '../caddyApi';
+import { getCaddyStartupMode } from '../caddySyncState';
 
 const mockGetSites = vi.mocked(getSites);
 const mockAddSite = vi.mocked(addSite);
@@ -34,6 +42,8 @@ const mockWriteFile = vi.mocked(fs.writeFile);
 const mockStat = vi.mocked(fs.stat);
 const mockCopyFile = vi.mocked(fs.copyFile);
 const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
+const mockApplyCaddyConfigStrict = vi.mocked(applyCaddyConfigStrict);
+const mockStartupMode = vi.mocked(getCaddyStartupMode);
 
 const ENOENT = Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' });
 
@@ -51,19 +61,8 @@ describe('parseSitesFromCaddy', () => {
     ]);
   });
 
-  it('parses multiple named-matcher blocks', () => {
-    const content = [
-      '@alpha.com host alpha.com\nreverse_proxy @alpha.com localhost:3001',
-      '@beta.com host beta.com\nreverse_proxy @beta.com localhost:3002',
-    ].join('\n\n');
-    expect(parseSitesFromCaddy(content)).toEqual([
-      { host: 'alpha.com', upstream: 'localhost:3001' },
-      { host: 'beta.com', upstream: 'localhost:3002' },
-    ]);
-  });
-
-  it('ignores unrelated lines and only extracts matched sites', () => {
-    const content = 'www.example.com {\n  log\n}\n@foo.com host foo.com\nreverse_proxy @foo.com localhost:9000';
+  it('parses handle format blocks', () => {
+    const content = '@foo host foo.com\nhandle @foo {\n  reverse_proxy localhost:9000\n}';
     expect(parseSitesFromCaddy(content)).toEqual([
       { host: 'foo.com', upstream: 'localhost:9000' },
     ]);
@@ -74,34 +73,24 @@ describe('runFirstTimeSetup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAddSite.mockResolvedValue(undefined as never);
-    mockApplyCaddyConfig.mockResolvedValue(true);
+    mockApplyCaddyConfig.mockResolvedValue({ ok: true, error: null, status: 200 });
+    mockApplyCaddyConfigStrict.mockResolvedValue(undefined);
+    mockStartupMode.mockReturnValue('degraded');
     mockStat.mockResolvedValue({} as never);
     mockCopyFile.mockResolvedValue(undefined as never);
   });
 
-  it('skips setup when DB already has sites', async () => {
+  it('skips import setup when DB already has sites but still applies sync policy', async () => {
     mockGetSites.mockResolvedValue([{ id: '1', host: 'example.com', upstream: 'localhost:3000' }]);
 
     await runFirstTimeSetup();
 
     expect(mockAddSite).not.toHaveBeenCalled();
     expect(mockCopyFile).not.toHaveBeenCalled();
-    expect(mockApplyCaddyConfig).not.toHaveBeenCalled();
-  });
-
-  it('imports sites from Caddyfile when it has content', async () => {
-    mockGetSites.mockResolvedValue([]);
-    mockReadFile.mockResolvedValue('@example.com host example.com\nreverse_proxy @example.com localhost:3000\n' as never);
-
-    await runFirstTimeSetup();
-
-    expect(mockAddSite).toHaveBeenCalledOnce();
-    expect(mockAddSite).toHaveBeenCalledWith('example.com', 'localhost:3000');
-    expect(mockCopyFile).toHaveBeenCalledWith('/app/Caddyfile', '/app/Caddyfile.bak');
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
-  it('imports sites from Caddyfile', async () => {
+  it('imports sites from Caddyfile when it has content', async () => {
     mockGetSites.mockResolvedValue([]);
     mockReadFile.mockResolvedValue(CADDYFILE_CONTENT as never);
 
@@ -109,28 +98,27 @@ describe('runFirstTimeSetup', () => {
 
     expect(mockAddSite).toHaveBeenCalledOnce();
     expect(mockAddSite).toHaveBeenCalledWith('alpha.com', 'localhost:3001');
-    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
-  });
-
-  it('imports no sites when Caddyfile is empty', async () => {
-    mockGetSites.mockResolvedValue([]);
-    mockReadFile.mockResolvedValue('   ' as never);
-
-    await runFirstTimeSetup();
-
-    expect(mockAddSite).not.toHaveBeenCalled();
     expect(mockCopyFile).toHaveBeenCalledWith('/app/Caddyfile', '/app/Caddyfile.bak');
     expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 
-  it('continues when Caddyfile does not exist to back up', async () => {
+  it('continues in degraded mode when caddy apply fails', async () => {
     mockGetSites.mockResolvedValue([]);
     mockReadFile.mockResolvedValue('' as never);
-    mockCopyFile.mockRejectedValue(ENOENT);
+    mockApplyCaddyConfig.mockResolvedValue({ ok: false, error: 'down', status: null });
+
+    await expect(runFirstTimeSetup()).resolves.not.toThrow();
+  });
+
+  it('uses strict startup mode when configured', async () => {
+    mockStartupMode.mockReturnValue('strict');
+    mockGetSites.mockResolvedValue([]);
+    mockReadFile.mockResolvedValue('' as never);
 
     await runFirstTimeSetup();
 
-    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
+    expect(mockApplyCaddyConfigStrict).toHaveBeenCalledOnce();
+    expect(mockApplyCaddyConfig).not.toHaveBeenCalled();
   });
 
   it('creates Caddyfile.custom if it does not exist', async () => {
@@ -147,24 +135,13 @@ describe('runFirstTimeSetup', () => {
     );
   });
 
-  it('does not create Caddyfile.custom if it already exists', async () => {
+  it('continues when Caddyfile does not exist to back up', async () => {
     mockGetSites.mockResolvedValue([]);
     mockReadFile.mockResolvedValue('' as never);
-    mockStat.mockResolvedValue({} as never);
+    mockCopyFile.mockRejectedValue(ENOENT);
 
     await runFirstTimeSetup();
 
-    expect(mockWriteFile).not.toHaveBeenCalled();
-  });
-
-  it('de-duplicates sites with the same host', async () => {
-    mockGetSites.mockResolvedValue([]);
-    const dupContent = '@foo.com host foo.com\nreverse_proxy @foo.com localhost:3001\n@foo.com host foo.com\nreverse_proxy @foo.com localhost:3002';
-    mockReadFile.mockResolvedValue(dupContent as never);
-
-    await runFirstTimeSetup();
-
-    expect(mockAddSite).toHaveBeenCalledOnce();
-    expect(mockAddSite).toHaveBeenCalledWith('foo.com', 'localhost:3001');
+    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
   });
 });

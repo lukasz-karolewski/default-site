@@ -9,7 +9,7 @@ services:
     environment:
       - CADDY_API=${CADDY_API:-http://host.docker.internal:2019}
       - BASE_DOMAIN=${BASE_DOMAIN}
-      - CADDY_CUSTOM_FILE=${CADDY_CUSTOM_FILE:-/app/Caddyfile.custom}
+      - CADDY_CUSTOM_FILE=${CADDY_CUSTOM_FILE:-/etc/caddy/Caddyfile.custom}
       - DASHBOARD_UPSTREAM=${DASHBOARD_UPSTREAM:-localhost:3080}
       - CADDYFILE_PATH=${CADDYFILE_PATH:-/app/Caddyfile}
       - DB_PATH=${DB_PATH:-/app/data/sites.db}
@@ -17,7 +17,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - /etc/caddy/Caddyfile:/app/Caddyfile
-      - /etc/caddy/Caddyfile.custom:/app/Caddyfile.custom:ro
+      - /etc/caddy/Caddyfile.custom:/etc/caddy/Caddyfile.custom:ro
       - sites_data:/app/data
 
 volumes:

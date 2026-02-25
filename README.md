@@ -15,7 +15,7 @@ Generated Caddyfile shape:
 # Use Caddyfile.custom for TLS, logging, and other options inside the site block.
 
 *.example.com, example.com {
-    import /app/Caddyfile.custom
+    import /etc/caddy/Caddyfile.custom
 
     @ha host ha.example.com
     handle @ha {
@@ -85,7 +85,9 @@ In your global Caddy options block (before any site blocks), make sure the Admin
 
 ```
 {
-    admin 0.0.0.0:2019
+    admin 0.0.0.0:2019 {
+        origins host.docker.internal:2019 localhost:2019 127.0.0.1:2019
+    }
 }
 ```
 
@@ -162,7 +164,7 @@ Place it at `/etc/caddy/Caddyfile` before starting the container. On first run, 
 
 ## Troubleshooting
 
-### Docker mount error: `... /app/Caddyfile.custom ... not a directory`
+### Docker mount error: `... Caddyfile.custom ... not a directory`
 
 This means host and container mount types do not match.
 
@@ -223,9 +225,29 @@ docker compose up --force-recreate
 |---------------------|---------------------------|-------------|
 | `BASE_DOMAIN`       | *(required)*              | Root domain for the wildcard block (e.g. `example.com`) |
 | `CADDY_API`         | `http://localhost:2019`   | URL of the Caddy Admin API |
-| `CADDY_CUSTOM_FILE` | `/app/Caddyfile.custom`   | Path to the custom config imported inside the wildcard block |
+| `CADDY_STARTUP_MODE` | `degraded`               | Startup behavior when Caddy API is unavailable: `degraded`, `strict`, or `wait` |
+| `CADDY_STARTUP_WAIT_SECONDS` | `30`            | Max wait time in `wait` mode before continuing in degraded mode |
+| `CADDY_RETRY_SECONDS` | `10`                    | Background retry interval when sync is pending |
+| `CADDY_CUSTOM_FILE` | `/etc/caddy/Caddyfile.custom` | Path Caddy imports inside the wildcard block |
 | `DASHBOARD_UPSTREAM`| `localhost:3080`          | Upstream for the root domain catchall (this app) |
 | `CADDYFILE_PATH`    | `/app/Caddyfile`          | Path to the generated Caddyfile (must be volume-mounted to `/etc/caddy/Caddyfile`) |
+
+### Startup modes
+
+- `degraded` (default): app starts even if Caddy is down. Site changes are saved and retried automatically.
+- `strict`: app startup and site updates fail if Caddy config cannot be loaded.
+- `wait`: app retries for `CADDY_STARTUP_WAIT_SECONDS`, then continues in degraded mode.
+
+### Dashboard recovery UI
+
+When Caddy is down or out of sync, the dashboard shows a status panel with:
+
+- Current Caddy API target
+- Last sync error
+- Recovery commands to run on the host
+- A `Retry sync now` button
+
+In degraded mode, add/edit/delete still save to SQLite and mark sync as pending until Caddy is reachable.
 
 ## Development
 
@@ -248,7 +270,7 @@ BASE_DOMAIN=test.com npm run dev
 Browser → UI (Next.js App Router)
            │
            ▼
-      /api/sites (REST)
+      Server Actions (add/update/delete)
            │
            ▼
       SQLite (sites_data volume)
@@ -259,6 +281,9 @@ Browser → UI (Next.js App Router)
            ├── writes /app/Caddyfile  (→ /etc/caddy/Caddyfile on host)
            │
            └── POST /load → Caddy Admin API  (live reload, no downtime)
+
+Browser → /api/status/caddy + /api/status/caddy/retry (status polling + manual retry)
+Browser → /api/sites (read-only site list endpoint)
 ```
 
 ## License

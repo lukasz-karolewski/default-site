@@ -5,6 +5,11 @@ vi.mock('fs/promises', () => ({
   default: { writeFile: vi.fn() },
   writeFile: vi.fn(),
 }));
+vi.mock('../caddySyncState', () => ({
+  markCaddyFailure: vi.fn(),
+  markCaddyPending: vi.fn(),
+  markCaddySuccess: vi.fn(),
+}));
 
 import { applyCaddyConfig } from '../caddyApi';
 import { generateCaddyfile } from '../caddyfileGen';
@@ -13,13 +18,13 @@ import fs from 'fs/promises';
 const mockGenerateCaddyfile = vi.mocked(generateCaddyfile);
 const mockWriteFile = vi.mocked(fs.writeFile);
 
-const GENERATED = '# Managed by default-site — do not edit manually.\n# Use Caddyfile.custom for global options, TLS config, and extra blocks.\n\nimport /app/Caddyfile.custom\n';
+const GENERATED = '# Managed by default-site\n';
 
 describe('applyCaddyConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGenerateCaddyfile.mockResolvedValue(GENERATED);
-    global.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 } as Response);
   });
 
   it('writes the generated Caddyfile to CADDYFILE_PATH', async () => {
@@ -42,14 +47,17 @@ describe('applyCaddyConfig', () => {
     expect(opts.body).toBe(GENERATED);
   });
 
-  it('throws when the Caddy API returns a non-ok response', async () => {
-    mockGenerateCaddyfile.mockResolvedValue(GENERATED);
+  it('returns error metadata when API returns non-ok response', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
       text: async () => 'internal error',
     } as unknown as Response);
 
-    await expect(applyCaddyConfig()).rejects.toThrow('Caddy API error: 500');
+    const result = await applyCaddyConfig();
+
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(500);
+    expect(result.error).toContain('Caddy API error: 500');
   });
 });
