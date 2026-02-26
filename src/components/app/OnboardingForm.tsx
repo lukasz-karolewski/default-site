@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '~/components/ui/button';
 import { completeOnboardingAction, type OnboardingActionState } from '~/lib/actions/onboardingActions';
@@ -28,6 +28,10 @@ export default function OnboardingForm({
 }: OnboardingFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(completeOnboardingAction, INITIAL_STATE);
+  const [baseDomain, setBaseDomain] = useState(initialBaseDomain);
+  const [siteBlockDirectives, setSiteBlockDirectives] = useState(initialDirectives);
+  const [caddyApi, setCaddyApi] = useState(initialCaddyApi);
+  const [dashboardUpstream, setDashboardUpstream] = useState(initialDashboardUpstream);
 
   useEffect(() => {
     if (!state.ok) return;
@@ -53,7 +57,8 @@ export default function OnboardingForm({
             <input
               id="baseDomain"
               name="baseDomain"
-              defaultValue={initialBaseDomain}
+              value={baseDomain}
+              onChange={event => setBaseDomain(event.target.value)}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
@@ -67,7 +72,8 @@ export default function OnboardingForm({
             <textarea
               id="siteBlockDirectives"
               name="siteBlockDirectives"
-              defaultValue={initialDirectives}
+              value={siteBlockDirectives}
+              onChange={event => setSiteBlockDirectives(event.target.value)}
               required
               rows={8}
               className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
@@ -81,7 +87,8 @@ export default function OnboardingForm({
             <input
               id="caddyApi"
               name="caddyApi"
-              defaultValue={initialCaddyApi}
+              value={caddyApi}
+              onChange={event => setCaddyApi(event.target.value)}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
@@ -94,7 +101,8 @@ export default function OnboardingForm({
             <input
               id="dashboardUpstream"
               name="dashboardUpstream"
-              defaultValue={initialDashboardUpstream}
+              value={dashboardUpstream}
+              onChange={event => setDashboardUpstream(event.target.value)}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />

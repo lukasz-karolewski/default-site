@@ -9,7 +9,9 @@ services:
     environment:
       - CADDYFILE_PATH=${CADDYFILE_PATH:-/app/Caddyfile}
       - DB_PATH=${DB_PATH:-/app/data/sites.db}
+      - CADDY_RETRY_SECONDS=${CADDY_RETRY_SECONDS:-10}
     extra_hosts:
+      # Required on Linux/Ubuntu so containers can resolve the host gateway.
       - "host.docker.internal:host-gateway"
     volumes:
       - /etc/caddy/Caddyfile:/app/Caddyfile
