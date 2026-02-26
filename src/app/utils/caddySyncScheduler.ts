@@ -1,5 +1,5 @@
 import { applyCaddyConfig } from './caddyApi';
-import { getCaddySyncSnapshot } from './caddySyncState';
+import { getCaddySyncSnapshot } from '~/lib/caddySyncState';
 
 let retryTimer: NodeJS.Timeout | null = null;
 
@@ -17,7 +17,7 @@ export function ensureCaddyRetryLoop() {
   if (retryTimer) return;
 
   retryTimer = setInterval(async () => {
-    const status = getCaddySyncSnapshot();
+    const status = await getCaddySyncSnapshot();
     if (!status.pendingChanges) return;
     await retryCaddyNow();
   }, retryIntervalMs());

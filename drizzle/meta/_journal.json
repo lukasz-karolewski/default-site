@@ -8,6 +8,13 @@
       "when": 1771405306253,
       "tag": "0000_easy_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772136000000,
+      "tag": "0001_caddy_sync_state",
+      "breakpoints": true
     }
   ]
 }

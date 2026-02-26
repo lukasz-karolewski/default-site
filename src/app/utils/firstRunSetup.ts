@@ -1,9 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { getSites, addSite } from './siteService';
-import { applyCaddyConfig, applyCaddyConfigStrict } from './caddyApi';
+import { applyCaddyConfig } from './caddyApi';
 import { ensureCaddyRetryLoop } from './caddySyncScheduler';
-import { getCaddyStartupMode } from './caddySyncState';
 import { getCaddyCustomFilePath, getCaddyfilePath } from './runtimePaths';
 
 const CADDYFILE_PATH = getCaddyfilePath();
@@ -12,16 +11,6 @@ const CADDY_CUSTOM_FILE = getCaddyCustomFilePath();
 const DEFAULT_CADDY_CUSTOM_CONTENT = `tls internal
 log
 `;
-
-function startupWaitMs(): number {
-  const seconds = Number(process.env.CADDY_STARTUP_WAIT_SECONDS ?? '30');
-  if (!Number.isFinite(seconds) || seconds <= 0) return 30_000;
-  return seconds * 1000;
-}
-
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 export function parseSitesFromCaddy(content: string): Array<{ host: string; upstream: string }> {
   const results: Array<{ host: string; upstream: string }> = [];
@@ -49,26 +38,6 @@ export function parseSitesFromCaddy(content: string): Array<{ host: string; upst
 }
 
 async function applyStartupPolicy() {
-  const mode = getCaddyStartupMode();
-
-  if (mode === 'strict') {
-    await applyCaddyConfigStrict();
-    return;
-  }
-
-  if (mode === 'wait') {
-    const deadline = Date.now() + startupWaitMs();
-    while (Date.now() < deadline) {
-      const result = await applyCaddyConfig();
-      if (result.ok) return;
-      await sleep(1000);
-    }
-
-    console.warn('[first-run] Caddy API unavailable after wait timeout; continuing in degraded mode');
-    ensureCaddyRetryLoop();
-    return;
-  }
-
   const result = await applyCaddyConfig();
   if (!result.ok) {
     console.warn(`[first-run] Caddy API unavailable; continuing in degraded mode: ${result.error}`);

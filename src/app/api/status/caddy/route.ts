@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getCaddySyncSnapshot } from '../../../utils/caddySyncState';
+import { buildCaddyStatusPayload } from '~/lib/caddyStatusPayload';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json(getCaddySyncSnapshot());
+  return NextResponse.json(await buildCaddyStatusPayload());
 }

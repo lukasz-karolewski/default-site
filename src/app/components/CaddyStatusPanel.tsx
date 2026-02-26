@@ -5,7 +5,6 @@ import { buildCaddyUrl, CADDY_CONFIG_PATH, DEFAULT_CADDY_API_URL } from '../util
 
 interface CaddyStatus {
   connected: boolean;
-  startupMode: 'degraded' | 'strict' | 'wait';
   lastError: string | null;
   lastAttemptAt: string | null;
   lastSuccessAt: string | null;
@@ -15,7 +14,6 @@ interface CaddyStatus {
 
 const DEFAULT_STATUS: CaddyStatus = {
   connected: true,
-  startupMode: 'degraded',
   lastError: null,
   lastAttemptAt: null,
   lastSuccessAt: null,
@@ -96,7 +94,6 @@ export default function CaddyStatusPanel() {
           </button>
         </>
       )}
-      <p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-zinc-700">Mode: {status.startupMode}</p>
     </section>
   );
 }

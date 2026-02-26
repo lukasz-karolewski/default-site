@@ -225,18 +225,14 @@ docker compose up --force-recreate
 |---------------------|---------------------------|-------------|
 | `BASE_DOMAIN`       | *(required)*              | Root domain for the wildcard block (e.g. `example.com`) |
 | `CADDY_API`         | `http://localhost:2019`   | URL of the Caddy Admin API |
-| `CADDY_STARTUP_MODE` | `degraded`               | Startup behavior when Caddy API is unavailable: `degraded`, `strict`, or `wait` |
-| `CADDY_STARTUP_WAIT_SECONDS` | `30`            | Max wait time in `wait` mode before continuing in degraded mode |
 | `CADDY_RETRY_SECONDS` | `10`                    | Background retry interval when sync is pending |
 | `CADDY_CUSTOM_FILE` | `/etc/caddy/Caddyfile.custom` | Path Caddy imports inside the wildcard block |
 | `DASHBOARD_UPSTREAM`| `localhost:3080`          | Upstream for the root domain catchall (this app) |
 | `CADDYFILE_PATH`    | `/app/Caddyfile`          | Path to the generated Caddyfile (must be volume-mounted to `/etc/caddy/Caddyfile`) |
 
-### Startup modes
+### Startup behavior
 
-- `degraded` (default): app starts even if Caddy is down. Site changes are saved and retried automatically.
-- `strict`: app startup and site updates fail if Caddy config cannot be loaded.
-- `wait`: app retries for `CADDY_STARTUP_WAIT_SECONDS`, then continues in degraded mode.
+- Degraded mode only: app starts even if Caddy is down. Site changes are saved and retried automatically.
 
 ### Dashboard recovery UI
 
@@ -247,7 +243,7 @@ When Caddy is down or out of sync, the dashboard shows a status panel with:
 - Recovery commands to run on the host
 - A `Retry sync now` button
 
-In degraded mode, add/edit/delete still save to SQLite and mark sync as pending until Caddy is reachable.
+Add/edit/delete still save to SQLite and mark sync as pending until Caddy is reachable.
 
 ## Development
 

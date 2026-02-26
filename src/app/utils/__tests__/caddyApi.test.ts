@@ -5,8 +5,9 @@ vi.mock('fs/promises', () => ({
   default: { writeFile: vi.fn() },
   writeFile: vi.fn(),
 }));
-vi.mock('../caddySyncState', () => ({
+vi.mock('~/lib/caddySyncState', () => ({
   markCaddyFailure: vi.fn(),
+  markCaddyfileManagedWrite: vi.fn(),
   markCaddyPending: vi.fn(),
   markCaddySuccess: vi.fn(),
 }));

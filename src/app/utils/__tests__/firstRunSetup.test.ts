@@ -20,20 +20,15 @@ vi.mock('fs/promises', () => ({
 
 vi.mock('../caddyApi', () => ({
   applyCaddyConfig: vi.fn(),
-  applyCaddyConfigStrict: vi.fn(),
 }));
 vi.mock('../caddySyncScheduler', () => ({
   ensureCaddyRetryLoop: vi.fn(),
-}));
-vi.mock('../caddySyncState', () => ({
-  getCaddyStartupMode: vi.fn(() => 'degraded'),
 }));
 
 import { parseSitesFromCaddy, runFirstTimeSetup } from '../firstRunSetup';
 import { getSites, addSite } from '../siteService';
 import fs from 'fs/promises';
-import { applyCaddyConfig, applyCaddyConfigStrict } from '../caddyApi';
-import { getCaddyStartupMode } from '../caddySyncState';
+import { applyCaddyConfig } from '../caddyApi';
 
 const mockGetSites = vi.mocked(getSites);
 const mockAddSite = vi.mocked(addSite);
@@ -42,8 +37,6 @@ const mockWriteFile = vi.mocked(fs.writeFile);
 const mockStat = vi.mocked(fs.stat);
 const mockCopyFile = vi.mocked(fs.copyFile);
 const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
-const mockApplyCaddyConfigStrict = vi.mocked(applyCaddyConfigStrict);
-const mockStartupMode = vi.mocked(getCaddyStartupMode);
 
 const ENOENT = Object.assign(new Error('ENOENT: no such file or directory'), { code: 'ENOENT' });
 
@@ -74,8 +67,6 @@ describe('runFirstTimeSetup', () => {
     vi.clearAllMocks();
     mockAddSite.mockResolvedValue(undefined as never);
     mockApplyCaddyConfig.mockResolvedValue({ ok: true, error: null, status: 200 });
-    mockApplyCaddyConfigStrict.mockResolvedValue(undefined);
-    mockStartupMode.mockReturnValue('degraded');
     mockStat.mockResolvedValue({} as never);
     mockCopyFile.mockResolvedValue(undefined as never);
   });
@@ -108,17 +99,6 @@ describe('runFirstTimeSetup', () => {
     mockApplyCaddyConfig.mockResolvedValue({ ok: false, error: 'down', status: null });
 
     await expect(runFirstTimeSetup()).resolves.not.toThrow();
-  });
-
-  it('uses strict startup mode when configured', async () => {
-    mockStartupMode.mockReturnValue('strict');
-    mockGetSites.mockResolvedValue([]);
-    mockReadFile.mockResolvedValue('' as never);
-
-    await runFirstTimeSetup();
-
-    expect(mockApplyCaddyConfigStrict).toHaveBeenCalledOnce();
-    expect(mockApplyCaddyConfig).not.toHaveBeenCalled();
   });
 
   it('creates Caddyfile.custom if it does not exist', async () => {

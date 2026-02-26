@@ -1,6 +1,6 @@
-import { applyCaddyConfig, applyCaddyConfigStrict } from './caddyApi';
+import { applyCaddyConfig } from './caddyApi';
 import { ensureCaddyRetryLoop } from './caddySyncScheduler';
-import { getCaddyStartupMode, getCaddySyncSnapshot } from './caddySyncState';
+import { getCaddySyncSnapshot } from '~/lib/caddySyncState';
 
 export interface CaddySyncResult {
   attempted: boolean;
@@ -9,16 +9,7 @@ export interface CaddySyncResult {
   pendingChanges: boolean;
 }
 
-function isStrictMode() {
-  return getCaddyStartupMode() === 'strict';
-}
-
 export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
-  if (isStrictMode()) {
-    await applyCaddyConfigStrict();
-    return { attempted: true, applied: true, error: null, pendingChanges: false };
-  }
-
   const result = await applyCaddyConfig();
   if (!result.ok) {
     ensureCaddyRetryLoop();
@@ -28,6 +19,6 @@ export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
     attempted: true,
     applied: result.ok,
     error: result.error,
-    pendingChanges: getCaddySyncSnapshot().pendingChanges,
+    pendingChanges: (await getCaddySyncSnapshot()).pendingChanges,
   };
 }

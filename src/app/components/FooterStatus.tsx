@@ -1,104 +1,91 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
-
-interface CaddyStatus {
-  connected: boolean;
-  startupMode: "degraded" | "strict" | "wait";
-  lastError: string | null;
-  lastAttemptAt: string | null;
-  lastSuccessAt: string | null;
-  pendingChanges: boolean;
-}
-
-const DEFAULT_STATUS: CaddyStatus = {
-  connected: true,
-  startupMode: "degraded",
-  lastError: null,
-  lastAttemptAt: null,
-  lastSuccessAt: null,
-  pendingChanges: false,
-};
-
-function formatTimestamp(value: string | null) {
-  if (!value) return "never";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "unknown";
-
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
+import { CADDY_CONFIG_PATH, buildCaddyUrl } from "../utils/caddyUrls";
+import CopyCommand from "./CopyCommand";
+import {
+  formatChanged,
+  formatHash,
+  formatTimestamp,
+  useCaddyStatus,
+} from "~/lib/useCaddyStatus";
 
 export default function FooterStatus() {
-  const [status, setStatus] = useState<CaddyStatus>(DEFAULT_STATUS);
-  const [retrying, setRetrying] = useState(false);
-
-  const healthy = status.connected && !status.pendingChanges;
-
-  const summary = useMemo(() => {
-    if (healthy) {
-      return `Connected · ${status.startupMode} · last sync ${formatTimestamp(status.lastSuccessAt)}`;
-    }
-
-    const failedAt = status.lastAttemptAt ?? status.lastSuccessAt;
-    return `Degraded · ${status.startupMode} · last attempt ${formatTimestamp(failedAt)}`;
-  }, [healthy, status.lastAttemptAt, status.lastSuccessAt, status.startupMode]);
-
-  async function fetchStatus() {
-    try {
-      const res = await fetch("/api/status/caddy", { cache: "no-store" });
-      if (!res.ok) return;
-      setStatus(await res.json());
-    } catch {
-      setStatus(prev => ({ ...prev, connected: false }));
-    }
-  }
-
-  async function retrySyncNow() {
-    setRetrying(true);
-    try {
-      await fetch("/api/status/caddy/retry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      await fetchStatus();
-    } finally {
-      setRetrying(false);
-    }
-  }
-
-  useEffect(() => {
-    void fetchStatus();
-  }, []);
-
-  useEffect(() => {
-    if (healthy) return;
-
-    const timer = setInterval(() => {
-      void fetchStatus();
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [healthy]);
+  const {
+    status,
+    writing,
+    showDiagnostics,
+    healthy,
+    summary,
+    fetchStatus,
+    writeConfigNow,
+    setShowDiagnostics,
+  } = useCaddyStatus();
 
   return (
     <footer className="mt-auto border-t border-border pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <p aria-live="polite">Status: {summary}</p>
-        {!healthy ? (
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             size="xs"
             variant="outline"
-            disabled={retrying}
-            onClick={retrySyncNow}
+            disabled={writing}
+            onClick={writeConfigNow}
           >
-            {retrying ? "Retrying" : "Retry"}
+            {writing ? "Writing..." : "Write config now"}
           </Button>
-        ) : null}
+          <Button type="button" size="xs" variant="outline" onClick={fetchStatus}>
+            Refresh
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            onClick={() => setShowDiagnostics(value => !value)}
+          >
+            {showDiagnostics ? "Hide diagnostics" : "Diagnostics"}
+          </Button>
+        </div>
       </div>
-      {!healthy && status.lastError ? (
+
+      {showDiagnostics ? (
+        <div className="mt-3 space-y-1 text-xs text-muted-foreground/90">
+          <p>Connected: {status.connected ? "yes" : "no"}</p>
+          <p>Pending changes: {status.pendingChanges ? "yes" : "no"}</p>
+          <p>API: {status.caddyApiUrl || "unavailable"}</p>
+          <p>
+            Config endpoint:{" "}
+            {status.caddyApiUrl
+              ? buildCaddyUrl(status.caddyApiUrl, CADDY_CONFIG_PATH)
+              : "unavailable"}
+          </p>
+          <p>Last Caddy API apply attempt: {formatTimestamp(status.lastAttemptAt)}</p>
+          <p>Last successful Caddy API apply: {formatTimestamp(status.lastSuccessAt)}</p>
+          <p>Last Caddyfile write by this app: {formatTimestamp(status.lastManagedWriteAt)}</p>
+          <p>Hash of last app-written Caddyfile: {formatHash(status.lastManagedWriteHash)}</p>
+          <p>Caddyfile path: {status.caddyfile.path || "unavailable"}</p>
+          <p>Caddyfile exists: {status.caddyfile.exists ? "yes" : "no"}</p>
+          <p>Caddyfile last modified on disk: {formatTimestamp(status.caddyfile.modifiedAt)}</p>
+          <p>Caddyfile size: {status.caddyfile.sizeBytes ?? "unknown"} bytes</p>
+          <p>Current on-disk Caddyfile hash: {formatHash(status.caddyfile.hash)}</p>
+          <p>
+            File changed since last app write:{" "}
+            {formatChanged(status.caddyfile.changedSinceLastManagedWrite)}
+          </p>
+          {status.caddyfile.readError ? <p>Caddyfile read error: {status.caddyfile.readError}</p> : null}
+          {status.lastError ? <p>Last error: {status.lastError}</p> : null}
+          <div className="space-y-1">
+            <p>Recovery:</p>
+            <div className="flex flex-wrap gap-2">
+              <CopyCommand command="systemctl is-active caddy" />
+              <CopyCommand command="sudo systemctl start caddy" />
+              <CopyCommand command="sudo journalctl -u caddy -n 200 --no-pager" />
+            </div>
+          </div>
+        </div>
+      ) : !healthy && status.lastError ? (
         <p className="mt-2 text-xs text-muted-foreground/90">{status.lastError}</p>
       ) : null}
     </footer>
