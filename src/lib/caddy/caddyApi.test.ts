@@ -11,8 +11,8 @@ vi.mock('~/lib/caddy/caddySyncState', () => ({
   markCaddyPending: vi.fn(),
   markCaddySuccess: vi.fn(),
 }));
-vi.mock('./caddyApiConfig', () => ({
-  getRuntimeCaddyApiUrl: vi.fn(async () => 'http://localhost:2019'),
+vi.mock('~/lib/data/siteConfig', () => ({
+  getSiteConfig: vi.fn(async () => ({ caddyApi: 'http://localhost:2019' })),
 }));
 
 import { applyCaddyConfig } from './caddyApi';

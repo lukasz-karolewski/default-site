@@ -16,6 +16,7 @@ vi.mock('~/lib/data/siteConfig', () => ({
   getSiteConfig: vi.fn(),
   upsertSiteConfig: vi.fn(),
   markOnboardingCompleted: vi.fn(),
+  normalizeCaddyApi: vi.fn((v: string) => v.trim()),
   normalizeDirectives: vi.fn((v: string) => v.trim()),
   normalizeDomain: vi.fn((v: string) => v.trim()),
   normalizeUpstream: vi.fn((v: string) => v.trim()),

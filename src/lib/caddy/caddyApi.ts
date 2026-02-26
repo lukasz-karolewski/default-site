@@ -10,7 +10,7 @@ import {
 } from '~/lib/caddy/caddySyncState';
 import { buildCaddyUrl, CADDY_LOAD_PATH } from '~/lib/caddy/caddyUrls';
 import { getCaddyfilePath } from '~/lib/config/runtimePaths';
-import { getRuntimeCaddyApiUrl } from './caddyApiConfig';
+import { getSiteConfig } from '~/lib/data/siteConfig';
 
 const CADDYFILE_PATH = getCaddyfilePath();
 
@@ -34,7 +34,8 @@ export async function renderAndWriteCaddyfile(): Promise<string> {
 
 export async function pushConfigToCaddyApi(caddyfile: string): Promise<CaddyApplyResult> {
   await markCaddyPending();
-  const caddyApi = await getRuntimeCaddyApiUrl();
+  const config = await getSiteConfig();
+  const caddyApi = config?.caddyApi ?? '';
 
   try {
     const resp = await fetch(buildCaddyUrl(caddyApi, CADDY_LOAD_PATH), {

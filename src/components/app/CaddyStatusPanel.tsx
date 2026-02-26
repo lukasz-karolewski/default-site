@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { buildCaddyUrl, CADDY_CONFIG_PATH, DEFAULT_CADDY_API_URL } from '~/lib/caddy/caddyUrls';
+import { buildCaddyUrl, CADDY_CONFIG_PATH } from '~/lib/caddy/caddyUrls';
 
 interface CaddyStatus {
   connected: boolean;
@@ -18,7 +18,7 @@ const DEFAULT_STATUS: CaddyStatus = {
   lastAttemptAt: null,
   lastSuccessAt: null,
   pendingChanges: false,
-  caddyApiUrl: DEFAULT_CADDY_API_URL,
+  caddyApiUrl: '',
 };
 
 export default function CaddyStatusPanel() {

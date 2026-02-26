@@ -1,4 +1,3 @@
-export const DEFAULT_CADDY_API_URL = 'http://host.docker.internal:2019';
 export const CADDY_LOAD_PATH = '/load';
 export const CADDY_CONFIG_PATH = '/config/';
 export const SITE_URL_PROTOCOL = 'https://';

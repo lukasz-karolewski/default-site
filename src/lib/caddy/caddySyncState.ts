@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { caddySyncState } from '~/lib/data/schema';
 import { getDb } from '~/lib/data/db';
-import { getRuntimeCaddyApiUrl } from '~/lib/caddy/caddyApiConfig';
+import { getSiteConfig } from '~/lib/data/siteConfig';
 
 const STATE_ID = 'singleton';
 
@@ -94,7 +94,8 @@ export async function markCaddyfileManagedWrite(hash: string) {
 
 export async function getCaddySyncSnapshot(): Promise<CaddySyncSnapshot> {
   const row = await readStateRow();
-  const caddyApi = await getRuntimeCaddyApiUrl();
+  const config = await getSiteConfig();
+  const caddyApi = config?.caddyApi ?? '';
 
   return {
     connected: row?.connected ?? true,

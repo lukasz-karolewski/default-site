@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { addSite, getSites } from '~/lib/data/siteService';
 import { applyCaddyConfig } from '~/lib/caddy/caddyApi';
 import { ensureCaddyRetryLoop } from '~/lib/caddy/caddySyncScheduler';
-import { buildCaddyUrl, CADDY_CONFIG_PATH, DEFAULT_CADDY_API_URL } from '~/lib/caddy/caddyUrls';
+import { buildCaddyUrl, CADDY_CONFIG_PATH } from '~/lib/caddy/caddyUrls';
 import { getCaddyfilePath } from '~/lib/config/runtimePaths';
 import {
   getSiteConfig,
@@ -120,8 +120,7 @@ function detectDirectivesFromWildcardBlock(content: string): string {
 
 function detectCaddyApiFromGlobalOptions(content: string): string {
   const adminMatch = content.match(/\badmin\s+([^\s{]+)/);
-  if (!adminMatch?.[1]) return DEFAULT_CADDY_API_URL;
-  return normalizeCaddyApi(adminMatch[1]) || DEFAULT_CADDY_API_URL;
+  return normalizeCaddyApi(adminMatch?.[1] ?? '');
 }
 
 function detectDashboardUpstreamFromWildcardBlock(content: string): string {
@@ -160,7 +159,7 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft | null> {
   if (existingConfig) {
     return {
       baseDomain: existingConfig.baseDomain,
-      caddyApi: existingConfig.caddyApi || DEFAULT_CADDY_API_URL,
+      caddyApi: existingConfig.caddyApi,
       dashboardUpstream: existingConfig.dashboardUpstream || DEFAULT_DASHBOARD_UPSTREAM,
       siteBlockDirectives: existingConfig.siteBlockDirectives,
       importedSites: (await getSites()).length,
@@ -185,7 +184,7 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft | null> {
   const siteBlockDirectives = caddyfile
     ? detectDirectivesFromWildcardBlock(caddyfile)
     : DEFAULT_SITE_BLOCK_DIRECTIVES;
-  const caddyApi = caddyfile ? detectCaddyApiFromGlobalOptions(caddyfile) : DEFAULT_CADDY_API_URL;
+  const caddyApi = caddyfile ? detectCaddyApiFromGlobalOptions(caddyfile) : '';
   const dashboardUpstream = caddyfile
     ? detectDashboardUpstreamFromWildcardBlock(caddyfile)
     : DEFAULT_DASHBOARD_UPSTREAM;
