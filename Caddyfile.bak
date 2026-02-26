@@ -5,10 +5,21 @@
 }
 
 # Managed by default-site — do not edit manually.
-# Use Caddyfile.custom for TLS, logging, and other options inside the site block.
 
 *.lk-pc.localdomain, lk-pc.localdomain {
-	import /home/lk/sources/default-site/Caddyfile.custom
+	tls internal
+
+	log
+
+	@postgres host postgres
+	handle @postgres {
+		reverse_proxy localhost:1234
+	}
+
+	@asd host asd
+	handle @asd {
+		reverse_proxy fdsa
+	}
 
 	handle {
 		reverse_proxy localhost:3080

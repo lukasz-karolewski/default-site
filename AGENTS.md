@@ -6,5 +6,6 @@ Before any Next.js work, find and read the relevant doc in `node_modules/next/di
  
 <!-- END:nextjs-agent-rules -->
 
-Standards: 
+# Standards: 
 - all components should be thin, view only, all business logic should be in ./src/lib/
+- Always use existing components form ./src/components/ when possible, if not available, use shadcn, and if there isn't one only then create a new one in ./src/components/ and use it.

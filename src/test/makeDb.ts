@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import Database from 'better-sqlite3';
 import path from 'path';
-import * as schema from '../app/utils/schema';
+import * as schema from '~/lib/data/schema';
 
 export function makeTestDb() {
   const sqlite = new Database(':memory:');

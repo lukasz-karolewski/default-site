@@ -1,10 +1,16 @@
-import { getSites } from "./utils/siteService";
-import SiteGridPage from "./components/SiteGridPage";
+import { getSites } from "~/lib/data/siteService";
+import { getSiteConfig } from "~/lib/data/siteConfig";
+import SiteGridPage from "~/components/app/SiteGridPage";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const sites = await getSites();
+  const config = await getSiteConfig();
+  if (!config || config.onboardingStatus !== "completed") {
+    redirect("/onboarding");
+  }
 
-  return <SiteGridPage sites={sites} baseDomain={process.env.BASE_DOMAIN ?? "localhost"} />;
+  const sites = await getSites();
+  return <SiteGridPage sites={sites} baseDomain={config.baseDomain} />;
 }
