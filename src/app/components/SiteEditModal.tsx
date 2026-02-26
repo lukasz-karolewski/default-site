@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +13,12 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { deleteSiteAction, saveSiteAction } from "../actions/siteActions";
+import {
+  deleteSiteAction,
+  type SiteActionState,
+  saveSiteAction,
+} from "../actions/siteActions";
+import { useNotice } from "~/lib/noticeContext";
 
 interface SiteRecord {
   id: string;
@@ -28,11 +34,35 @@ interface SiteEditModalProps {
 }
 
 export default function SiteEditModal({ open, onOpenChange, mode, site }: SiteEditModalProps) {
+  const { notify } = useNotice();
+  const initialState: SiteActionState = { ok: false, message: null };
+  const formKey = `${mode}:${site?.id ?? "new"}`;
+  const [saveState, saveFormAction, savePending] = useActionState(
+    saveSiteAction,
+    initialState,
+  );
+  const [deleteState, deleteFormAction, deletePending] = useActionState(
+    deleteSiteAction,
+    initialState,
+  );
+
   const title = mode === "add" ? "Add site" : "Edit site";
   const description =
     mode === "add"
       ? "Create a new subdomain route."
       : "Update subdomain and redirect target.";
+
+  useEffect(() => {
+    if (!saveState.message) return;
+    notify(saveState.message);
+    if (saveState.ok) onOpenChange(false);
+  }, [notify, onOpenChange, saveState]);
+
+  useEffect(() => {
+    if (!deleteState.message) return;
+    notify(deleteState.message);
+    if (deleteState.ok) onOpenChange(false);
+  }, [deleteState, notify, onOpenChange]);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -42,7 +72,7 @@ export default function SiteEditModal({ open, onOpenChange, mode, site }: SiteEd
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
 
-        <form id="site-save-form" action={saveSiteAction} className="grid gap-3">
+        <form key={formKey} id="site-save-form" action={saveFormAction} className="grid gap-3">
           <input type="hidden" name="id" value={site?.id ?? ""} />
 
           <div className="grid gap-1.5">
@@ -69,7 +99,7 @@ export default function SiteEditModal({ open, onOpenChange, mode, site }: SiteEd
         </form>
 
         {mode === "edit" && site ? (
-          <form id="site-delete-form" action={deleteSiteAction}>
+          <form id="site-delete-form" action={deleteFormAction}>
             <input type="hidden" name="id" value={site.id} />
           </form>
         ) : null}
@@ -81,8 +111,9 @@ export default function SiteEditModal({ open, onOpenChange, mode, site }: SiteEd
               type="submit"
               form="site-delete-form"
               className="h-8 px-3"
+              disabled={deletePending || savePending}
             >
-              Delete
+              {deletePending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           ) : (
             <span />
@@ -92,8 +123,13 @@ export default function SiteEditModal({ open, onOpenChange, mode, site }: SiteEd
             <AlertDialogCancel type="button" className="h-8 px-3">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction type="submit" form="site-save-form" className="h-8 px-3">
-              {mode === "add" ? "Add" : "Save"}
+            <AlertDialogAction
+              type="submit"
+              form="site-save-form"
+              className="h-8 px-3"
+              disabled={savePending || deletePending}
+            >
+              {savePending ? "Saving..." : mode === "add" ? "Add" : "Save"}
             </AlertDialogAction>
           </div>
         </AlertDialogFooter>

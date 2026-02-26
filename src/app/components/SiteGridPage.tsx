@@ -10,14 +10,13 @@ export interface SiteRecord {
 interface SiteGridPageProps {
   sites: SiteRecord[];
   baseDomain: string;
-  notice?: string;
 }
 
-export default function SiteGridPage({ sites, baseDomain, notice }: SiteGridPageProps) {
+export default function SiteGridPage({ sites, baseDomain }: SiteGridPageProps) {
   return (
     <main className="min-h-screen px-4 py-6 sm:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col">
-        <SiteGridClient sites={sites} baseDomain={baseDomain} notice={notice} />
+        <SiteGridClient sites={sites} baseDomain={baseDomain} />
         <FooterStatus />
       </div>
     </main>

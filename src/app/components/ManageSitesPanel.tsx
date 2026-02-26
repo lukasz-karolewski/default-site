@@ -12,6 +12,16 @@ interface ManageSitesPanelProps {
 }
 
 export default function ManageSitesPanel({ editingSite, notice }: ManageSitesPanelProps) {
+  async function saveSiteFormAction(formData: FormData) {
+    'use server';
+    await saveSiteAction({ ok: false, message: null }, formData);
+  }
+
+  async function deleteSiteFormAction(formData: FormData) {
+    'use server';
+    await deleteSiteAction({ ok: false, message: null }, formData);
+  }
+
   return (
     <section className="brutal-panel p-5">
       <h2 className="brutal-title text-2xl text-zinc-900">Manage Sites</h2>
@@ -23,7 +33,7 @@ export default function ManageSitesPanel({ editingSite, notice }: ManageSitesPan
         </p>
       )}
 
-      <form action={saveSiteAction} className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+      <form action={saveSiteFormAction} className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
         <input type="hidden" name="id" value={editingSite?.id ?? ''} />
         <input
           className="border-2 border-black bg-white p-2 font-semibold text-zinc-900 placeholder:text-zinc-500 focus:outline-none md:col-span-2"
@@ -49,7 +59,7 @@ export default function ManageSitesPanel({ editingSite, notice }: ManageSitesPan
 
       {editingSite && (
         <div className="mt-3 flex flex-wrap gap-2">
-          <form action={deleteSiteAction}>
+          <form action={deleteSiteFormAction}>
             <input type="hidden" name="id" value={editingSite.id} />
             <button
               type="submit"

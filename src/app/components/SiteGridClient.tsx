@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { buildSiteUrl } from "../utils/siteLink";
 import SiteEditModal from "./SiteEditModal";
 import { PencilIcon, CheckIcon, PlusIcon } from "lucide-react";
+import { NoticeProvider, NoticeViewport } from "~/lib/noticeContext";
 
 interface SiteRecord {
   id: string;
@@ -15,15 +16,13 @@ interface SiteRecord {
 interface SiteGridClientProps {
   sites: SiteRecord[];
   baseDomain: string;
-  notice?: string;
 }
 
-export default function SiteGridClient({ sites, baseDomain, notice }: SiteGridClientProps) {
+export default function SiteGridClient({ sites, baseDomain }: SiteGridClientProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [floatingNotice, setFloatingNotice] = useState(notice);
 
   const selectedSite = useMemo(
     () => sites.find(site => site.id === selectedSiteId),
@@ -49,22 +48,8 @@ export default function SiteGridClient({ sites, baseDomain, notice }: SiteGridCl
     setModalOpen(true);
   }
 
-  useEffect(() => {
-    setFloatingNotice(notice);
-  }, [notice]);
-
-  useEffect(() => {
-    if (!floatingNotice) return;
-
-    const timer = setTimeout(() => {
-      setFloatingNotice(undefined);
-    }, 3200);
-
-    return () => clearTimeout(timer);
-  }, [floatingNotice]);
-
   return (
-    <>
+    <NoticeProvider>
       <section className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <h1 className="text-sm font-medium uppercase tracking-[0.18em] text-foreground/90">Sites</h1>
         <Button
@@ -79,14 +64,7 @@ export default function SiteGridClient({ sites, baseDomain, notice }: SiteGridCl
         </Button>
       </section>
 
-      {floatingNotice ? (
-        <p
-          className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 border border-border bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-sm backdrop-blur-sm"
-          role="status"
-        >
-          {floatingNotice}
-        </p>
-      ) : null}
+      <NoticeViewport />
 
       <section className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
         {isEditMode ? (
@@ -161,6 +139,6 @@ export default function SiteGridClient({ sites, baseDomain, notice }: SiteGridCl
         mode={modalMode}
         site={selectedSite}
       />
-    </>
+    </NoticeProvider>
   );
 }
