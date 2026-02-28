@@ -17,9 +17,6 @@ export default async function OnboardingPage(props: PageProps<"/onboarding">) {
   }
 
   const draft = await ensureOnboardingDraft();
-  if (!draft) {
-    redirect("/");
-  }
 
   return (
     <OnboardingForm

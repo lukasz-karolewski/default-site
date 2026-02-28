@@ -179,7 +179,7 @@ function toManualCommands(
   ];
 }
 
-export async function ensureOnboardingDraft(): Promise<OnboardingDraft | null> {
+export async function ensureOnboardingDraft(): Promise<OnboardingDraft> {
   const existingConfig = await getSiteConfig();
   if (existingConfig) {
     return {
