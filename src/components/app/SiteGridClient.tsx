@@ -3,6 +3,7 @@
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
+import { buildFaviconUrl } from "~/lib/sites/favicon";
 import { buildSiteUrl } from "~/lib/sites/siteLink";
 import { NoticeProvider, NoticeViewport } from "~/lib/ui/noticeContext";
 import SiteEditModal from "./SiteEditModal";
@@ -86,6 +87,7 @@ export default function SiteGridClient({
       <section className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
         {sortedSites.map((site) => {
           const siteUrl = buildSiteUrl(site.host, baseDomain);
+          const faviconUrl = buildFaviconUrl(siteUrl);
           const tileClasses =
             "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
 
@@ -100,6 +102,16 @@ export default function SiteGridClient({
                 aria-label={`Open ${site.host}`}
               >
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <img
+                    src={faviconUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
                   <p className="text-lg font-bold text-foreground transition-transform duration-200 group-hover:-translate-y-1.5 sm:text-xl">
                     {site.host}
                   </p>
@@ -115,6 +127,16 @@ export default function SiteGridClient({
             <article key={site.id} className={tileClasses}>
               <div className="relative flex h-full items-center justify-center">
                 <div className="text-center">
+                  <img
+                    src={faviconUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="mx-auto mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
                   <p className="text-lg font-bold text-foreground sm:text-xl">
                     {site.host}
                   </p>
