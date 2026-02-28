@@ -1,12 +1,16 @@
-import SiteList from './components/SiteList';
+import { redirect } from "next/navigation";
+import SiteGridPage from "~/components/app/SiteGridPage";
+import { getSiteConfig } from "~/lib/data/siteConfig";
+import { getSites } from "~/lib/data/siteService";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-8">Available Sites</h1>
-      <SiteList />
-    </div>
-  );
+export default async function Home() {
+  const config = await getSiteConfig();
+  if (!config || config.onboardingStatus !== "completed") {
+    redirect("/onboarding");
+  }
+
+  const sites = await getSites();
+  return <SiteGridPage sites={sites} baseDomain={config.baseDomain} />;
 }

@@ -1,95 +1,61 @@
-# Default Site for Caddy Server
+# default-site
 
-A clean, simple Next.js app that displays a list of sites configured in a Caddy server. This serves as a default landing page when accessing the IP address directly.
+A self-hosted dashboard and Caddyfile manager for a homelab reverse proxy.
 
-## Context
+## Overview
 
-This application is designed to work with a Caddy server setup that provides HTTPS for locally deployed services that are only accessible from the local network. The Caddy configuration uses the [wildcard certificates pattern](https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates) and obtains certificates through the Route53 DNS module for automated certificate management.
+The app stores routes in SQLite and generates a managed Caddyfile. On first run it requires onboarding to set:
 
-This setup allows you to:
-- Access local services via secure HTTPS connections
-- Use real domain names with valid SSL certificates in your local environment
-- Provide a clean landing page that lists all available services
+- `baseDomain`
+- `caddyApi` URL
+- `dashboardUpstream` (where the root domain routes)
+- site block directives (for example `tls`, `log`, DNS challenge directives)
 
-## Features
+These values are stored in DB (`site_config`), not in environment variables or `Caddyfile.custom`.
 
-- Reads the Caddyfile mounted in the container
-- Automatically discovers and displays all hosts configured in Caddy
-- Clean, responsive interface with direct links to all sites
-- Built with Next.js App Router and Tailwind CSS
-- Server-side rendering for optimal performance
+## First Run
 
-## Docker Setup
+On first start, the app:
 
-The application runs in a Docker container and requires access to the Caddy configuration file.
+1. Creates onboarding draft config if missing.
+2. Tries to parse existing routes from mounted Caddyfile.
+3. Redirects `/` to `/onboarding` until setup is completed.
+4. On completion, writes Caddyfile and attempts Caddy Admin API reload.
+5. If reload fails, shows inline manual recovery commands.
 
-```bash
-# Clone the repository
-git clone https://github.com/lukasz-karolewski/default-site.git
-cd default-site
+## Deployment
 
-# Build and run with Docker Compose
-docker-compose up -d
-```
+### Docker compose
 
-The app will be available at http://localhost:3080
+Required runtime values:
 
-## Configuration
+- `CADDYFILE_PATH` (default: `/app/Caddyfile`)
+- `DB_PATH` (default: `/app/data/sites.db`)
+- `CADDY_RETRY_SECONDS` (default: `10`)
 
-The Docker configuration:
-- Mounts the Caddyfile as read-only at the root of the application
-- Exposes port 3080 to avoid conflicts with other services
-- Uses a multi-stage build process for optimized container size
+No `BASE_DOMAIN`. No `Caddyfile.custom`.
+
+### Volumes
+
+- Mount host Caddyfile to `/app/Caddyfile`
+- Mount app DB storage to `/app/data`
+
+## Environment variables
+
+| Variable              | Default                         | Description |
+|-----------------------|---------------------------------|-------------|
+| `CADDY_RETRY_SECONDS` | `10`                            | Retry interval when sync is pending |
+| `CADDYFILE_PATH`      | `/app/Caddyfile`                | Path to generated Caddyfile |
+| `DB_PATH`             | `/app/data/sites.db`            | SQLite database path |
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Run in development mode
 npm run dev
+npm test
+npm run build
 ```
-
-## How It Works
-
-The application scans the Caddyfile looking for lines starting with `@` that contain a `host` directive. It extracts the hostname and displays them as clickable links.
-
-Example Caddyfile pattern it recognizes:
-```
-@name host example.com
-```
-
-### Caddy Configuration Example
-
-This app is designed to work with a Caddy setup similar to:
-
-```
-{
-    # Use Route53 for DNS challenges with wildcard certificates
-    acme_dns route53 {
-        region us-east-1
-    }
-}
-
-# Default site that shows all available services
-:80, :443 {
-    respond "Default site"
-}
-
-# Example of a service definition that this app will detect
-@ha host ha.example.com
-handle @ha {
-    reverse_proxy homeassistant:8123
-}
-
-@dashboard host dashboard.example.com
-handle @dashboard {
-    reverse_proxy grafana:3000
-}
-```
-
-The app will find `ha.example.com` and `dashboard.example.com` from this configuration and display them as clickable links.
 
 ## License
 
