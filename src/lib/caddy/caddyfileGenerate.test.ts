@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { generateCaddyfile } from "./caddyfileGen";
+import { generateCaddyfile } from "./caddyfileGenerate";
 
 vi.mock("~/lib/data/siteService", () => ({
   getSites: vi.fn(),

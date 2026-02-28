@@ -18,7 +18,7 @@ vi.mock("~/lib/caddy/caddySyncState", () => ({
 }));
 
 import fs from "node:fs/promises";
-import { buildCaddyStatusPayload } from "~/lib/caddy/caddyStatusPayload";
+import { buildCaddyStatusPayload } from "~/lib/caddy/caddyBuildStatusPayload";
 import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
 
 const mockStat = vi.mocked(fs.stat);

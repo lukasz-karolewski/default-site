@@ -23,14 +23,14 @@ vi.mock("~/lib/config/runtimePaths", () => ({
 
 import fs from "node:fs/promises";
 import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
-import { applyCaddyConfig } from "./caddyApi";
+import { syncCaddy } from "./caddySyncPipeline";
 
 const mockGenerateCaddyfile = vi.mocked(generateCaddyfile);
 const mockWriteFile = vi.mocked(fs.writeFile);
 
 const GENERATED = "# Managed by default-site\n";
 
-describe("applyCaddyConfig", () => {
+describe("syncCaddy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGenerateCaddyfile.mockResolvedValue(GENERATED);
@@ -40,7 +40,7 @@ describe("applyCaddyConfig", () => {
   });
 
   it("writes the generated Caddyfile to CADDYFILE_PATH", async () => {
-    await applyCaddyConfig();
+    await syncCaddy();
 
     expect(mockWriteFile).toHaveBeenCalledOnce();
     const [path, content] = mockWriteFile.mock.calls[0];
@@ -49,7 +49,7 @@ describe("applyCaddyConfig", () => {
   });
 
   it("POSTs the generated Caddyfile to the Caddy admin API", async () => {
-    await applyCaddyConfig();
+    await syncCaddy();
 
     expect(fetch).toHaveBeenCalledOnce();
     const [url, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
@@ -66,7 +66,7 @@ describe("applyCaddyConfig", () => {
       text: async () => "internal error",
     } as unknown as Response);
 
-    const result = await applyCaddyConfig();
+    const result = await syncCaddy();
 
     expect(result.ok).toBe(false);
     expect(result.status).toBe(500);

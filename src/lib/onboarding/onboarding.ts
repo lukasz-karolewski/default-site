@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import { applyCaddyConfig } from "~/lib/caddy/caddyApi";
-import { ensureCaddyRetryLoop } from "~/lib/caddy/caddySyncScheduler";
+import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
+import { applyCaddyConfig } from "~/lib/caddy/caddySyncPipeline";
 import { buildCaddyUrl, CADDY_CONFIG_PATH } from "~/lib/caddy/caddyUrls";
 import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import {

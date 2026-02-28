@@ -1,5 +1,5 @@
+import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
 import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
-import { ensureCaddyRetryLoop } from "~/lib/caddy/caddySyncScheduler";
 import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
 
 export interface CaddySyncResult {

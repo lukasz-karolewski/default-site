@@ -22,17 +22,17 @@ vi.mock("~/lib/data/siteConfig", () => ({
   normalizeUpstream: vi.fn((v: string) => v.trim()),
 }));
 
-vi.mock("~/lib/caddy/caddyApi", () => ({
+vi.mock("~/lib/caddy/caddySyncPipeline", () => ({
   applyCaddyConfig: vi.fn(),
 }));
 
-vi.mock("~/lib/caddy/caddySyncScheduler", () => ({
+vi.mock("~/lib/caddy/caddyRetryLoop", () => ({
   ensureCaddyRetryLoop: vi.fn(),
 }));
 
 import fs from "node:fs/promises";
-import { applyCaddyConfig } from "~/lib/caddy/caddyApi";
-import { ensureCaddyRetryLoop } from "~/lib/caddy/caddySyncScheduler";
+import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
+import { applyCaddyConfig } from "~/lib/caddy/caddySyncPipeline";
 import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
 import {
