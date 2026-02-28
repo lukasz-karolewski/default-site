@@ -13,24 +13,22 @@ export interface ParsedSite {
   upstream: string;
 }
 
+const WILDCARD_HEADER =
+  /\*\.([A-Za-z0-9.-]+)\s*,\s*([A-Za-z0-9.-]+)\s*\{/;
+
 export function parseSitesFromCaddy(content: string): ParsedSite[] {
   const results: ParsedSite[] = [];
 
   const simplePattern =
     /@([\w.-]+)\s+host\s+([\w.-]+)\s*\n\s*reverse_proxy\s+@\1\s+([\w.:-]+)/gm;
-  let match: RegExpExecArray | null;
-  match = simplePattern.exec(content);
-  while (match !== null) {
-    results.push({ host: match[2], upstream: match[3] });
-    match = simplePattern.exec(content);
-  }
-
   const handlePattern =
     /@([\w.-]+)\s+host\s+([\w.-]+)\s*\n\s*handle\s+@\1\s*{\s*\n\s*reverse_proxy\s+([\w.:-]+)/gm;
-  match = handlePattern.exec(content);
-  while (match !== null) {
+
+  for (const match of content.matchAll(simplePattern)) {
     results.push({ host: match[2], upstream: match[3] });
-    match = handlePattern.exec(content);
+  }
+  for (const match of content.matchAll(handlePattern)) {
+    results.push({ host: match[2], upstream: match[3] });
   }
 
   return results;
@@ -61,12 +59,17 @@ function findBlockBody(content: string, startIndex: number): string {
   return "";
 }
 
+function findWildcardBlockBody(content: string): string | null {
+  const headerIndex = content.search(WILDCARD_HEADER);
+  if (headerIndex < 0) return null;
+  const body = findBlockBody(content, headerIndex);
+  return body || null;
+}
+
 export function detectBaseDomainFromWildcardBlock(
   content: string,
 ): string | null {
-  const wildcard = content.match(
-    /\*\.([A-Za-z0-9.-]+)\s*,\s*([A-Za-z0-9.-]+)\s*\{/,
-  );
+  const wildcard = content.match(WILDCARD_HEADER);
   if (!wildcard) return null;
   const wildcardDomain = normalizeDomain(wildcard[1]);
   const rootDomain = normalizeDomain(wildcard[2]);
@@ -86,20 +89,21 @@ export function inferBaseDomainFromHosts(hosts: string[]): string | null {
 
   if (counts.size === 0) return null;
 
-  return (
-    [...counts.entries()].sort(
-      (a, b) => b[1] - a[1] || b[0].length - a[0].length,
-    )[0][0] ?? null
-  );
+  let best: [string, number] | null = null;
+  for (const entry of counts) {
+    if (
+      !best ||
+      entry[1] > best[1] ||
+      (entry[1] === best[1] && entry[0].length > best[0].length)
+    ) {
+      best = entry;
+    }
+  }
+  return best![0];
 }
 
 export function detectDirectivesFromWildcardBlock(content: string): string {
-  const wildcardHeader = content.search(
-    /\*\.[A-Za-z0-9.-]+\s*,\s*[A-Za-z0-9.-]+\s*\{/,
-  );
-  if (wildcardHeader < 0) return DEFAULT_SITE_BLOCK_DIRECTIVES;
-
-  const body = findBlockBody(content, wildcardHeader);
+  const body = findWildcardBlockBody(content);
   if (!body) return DEFAULT_SITE_BLOCK_DIRECTIVES;
 
   const firstRouteIndex = body.search(
@@ -126,27 +130,25 @@ export function detectCaddyApiFromGlobalOptions(content: string): string {
 export function detectDashboardUpstreamFromWildcardBlock(
   content: string,
 ): string {
-  const wildcardHeader = content.search(
-    /\*\.[A-Za-z0-9.-]+\s*,\s*[A-Za-z0-9.-]+\s*\{/,
-  );
-  if (wildcardHeader < 0) return DEFAULT_DASHBOARD_UPSTREAM;
-  const body = findBlockBody(content, wildcardHeader);
+  const body = findWildcardBlockBody(content);
   if (!body) return DEFAULT_DASHBOARD_UPSTREAM;
 
-  const matches = [
-    ...body.matchAll(/handle\s*\{\s*[\s\S]*?reverse_proxy\s+([^\s}]+)/gm),
-  ];
-  if (matches.length === 0) return DEFAULT_DASHBOARD_UPSTREAM;
+  let lastMatch: RegExpMatchArray | null = null;
+  for (const match of body.matchAll(
+    /handle\s*\{\s*[\s\S]*?reverse_proxy\s+([^\s}]+)/gm,
+  )) {
+    lastMatch = match;
+  }
+  if (!lastMatch) return DEFAULT_DASHBOARD_UPSTREAM;
 
-  const value = matches[matches.length - 1][1];
-  return normalizeUpstream(value) || DEFAULT_DASHBOARD_UPSTREAM;
+  return normalizeUpstream(lastMatch[1]) || DEFAULT_DASHBOARD_UPSTREAM;
 }
 
 export function extractGlobalOptionsBlock(content: string): string {
   let i = 0;
 
   while (i < content.length) {
-    while (i < content.length && /\s/.test(content[i])) i++;
+    while (i < content.length && " \t\n\r\f\v".includes(content[i])) i++;
 
     if (content[i] === "#") {
       while (i < content.length && content[i] !== "\n") i++;
