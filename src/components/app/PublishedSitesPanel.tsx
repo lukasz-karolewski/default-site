@@ -1,4 +1,4 @@
-import { buildSiteUrl } from "~/lib/sites/siteLink";
+import { buildSiteUrl } from "~/lib/ui/siteLink";
 
 interface Site {
   id: string;

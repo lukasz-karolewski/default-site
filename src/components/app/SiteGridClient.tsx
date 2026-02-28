@@ -3,8 +3,8 @@
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { buildFaviconUrl } from "~/lib/sites/favicon";
-import { buildSiteUrl } from "~/lib/sites/siteLink";
+import { buildFaviconUrl } from "~/lib/ui/favicon";
+import { buildSiteUrl } from "~/lib/ui/siteLink";
 import { NoticeProvider, NoticeViewport } from "~/lib/ui/noticeContext";
 import SiteEditModal from "./SiteEditModal";
 
