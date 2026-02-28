@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/caddy/caddySyncState", () => ({
-  getCaddySyncSnapshot: vi.fn(),
+vi.mock("~/lib/data/siteService", () => ({
+  getCaddySyncStateSnapshot: vi.fn(),
 }));
 vi.mock("~/lib/caddy/caddySyncPipeline", () => ({
   syncCaddy: vi.fn(),
@@ -12,9 +12,9 @@ import {
   stopCaddyRetryLoop,
 } from "~/lib/caddy/caddyRetryLoop";
 import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
-import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
+import { getCaddySyncStateSnapshot } from "~/lib/data/siteService";
 
-const mockSnapshot = vi.mocked(getCaddySyncSnapshot);
+const mockSnapshot = vi.mocked(getCaddySyncStateSnapshot);
 const mockSyncCaddy = vi.mocked(syncCaddy);
 
 describe("retry loop", () => {

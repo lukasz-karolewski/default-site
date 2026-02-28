@@ -13,7 +13,6 @@ import {
 import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
 import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
 import { buildCaddyUrl, CADDY_CONFIG_PATH } from "~/lib/caddy/caddyUrls";
-import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import {
   getSiteConfig,
   markOnboardingCompleted,
@@ -24,6 +23,7 @@ import {
   upsertSiteConfig,
 } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
+import { getCaddyfilePath } from "~/lib/shared/paths";
 
 export interface OnboardingDraft {
   baseDomain: string;

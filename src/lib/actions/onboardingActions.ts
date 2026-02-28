@@ -1,6 +1,6 @@
 "use server";
 
-import { completeOnboarding } from "~/lib/onboarding/onboarding";
+import { completeOnboarding } from "~/lib/caddy/onboarding";
 
 export interface OnboardingActionState {
   ok: boolean;

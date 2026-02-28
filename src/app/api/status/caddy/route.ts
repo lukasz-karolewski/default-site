@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { buildCaddyStatusPayload } from "~/lib/caddy/caddyBuildStatusPayload";
+import { buildCaddyStatusPayload } from "~/lib/ui/caddyStatusPayload";
 
 export const dynamic = "force-dynamic";
 

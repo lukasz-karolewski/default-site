@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { generateCaddyfile } from "./caddyfileGenerate";
+import {
+  ensureAdminGlobalOptions,
+  extractGlobalOptionsBlock,
+  generateCaddyfile,
+} from "./caddyfileGenerate";
 
 vi.mock("~/lib/data/siteService", () => ({
   getSites: vi.fn(),
@@ -93,5 +97,42 @@ example.com {
     expect(result).toContain("email admin@example.com");
     expect(result).toContain("admin 0.0.0.0:2019 {");
     expect(result).toContain("*.test.com, test.com {");
+  });
+});
+
+describe("extractGlobalOptionsBlock", () => {
+  it("extracts top-level global options block", () => {
+    const block = extractGlobalOptionsBlock(`
+# comment
+{
+  email admin@example.com
+}
+
+example.com {
+  respond "ok"
+}
+`);
+
+    expect(block).toContain("email admin@example.com");
+    expect(block.startsWith("{")).toBe(true);
+  });
+
+  it("returns empty string when no global options are present", () => {
+    expect(extractGlobalOptionsBlock('example.com {\n respond "ok"\n}\n')).toBe(
+      "",
+    );
+  });
+});
+
+describe("ensureAdminGlobalOptions", () => {
+  it("replaces existing admin directive and preserves other directives", () => {
+    const options = ensureAdminGlobalOptions(`{
+  email admin@example.com
+  admin localhost:2019
+}`);
+
+    expect(options).toContain("email admin@example.com");
+    expect(options).toContain("admin 0.0.0.0:2019");
+    expect(options).not.toContain("admin localhost:2019");
   });
 });

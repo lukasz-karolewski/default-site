@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
-import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
+import { getCaddyfilePath } from "~/lib/shared/paths";
 
 const REQUIRED_ADMIN_BLOCK = `    admin 0.0.0.0:2019 {
         origins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}

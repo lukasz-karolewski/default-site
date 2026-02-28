@@ -1,17 +1,17 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
-import { sha256 } from "~/lib/caddy/caddyHash";
 import {
-  getCaddySyncSnapshot,
   markCaddyFailure,
   markCaddyfileManagedWrite,
   markCaddyPending,
   markCaddySuccess,
-} from "~/lib/caddy/caddySyncState";
+  getCaddySyncStateSnapshot,
+} from "~/lib/data/siteService";
 import { buildCaddyUrl, CADDY_LOAD_PATH } from "~/lib/caddy/caddyUrls";
-import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import { getSiteConfig } from "~/lib/data/siteConfig";
+import { sha256 } from "~/lib/shared/hash";
+import { getCaddyfilePath } from "~/lib/shared/paths";
 
 export interface CaddyApplyResult {
   ok: boolean;
@@ -53,7 +53,7 @@ async function pushConfigToCaddyApi(
   }
 }
 
-export async function renderAndWriteCaddyfile(): Promise<string> {
+async function renderAndWriteCaddyfile(): Promise<string> {
   const caddyfile = await generateCaddyfile();
   const caddyfilePath = getCaddyfilePath();
   await fs.mkdir(path.dirname(caddyfilePath), { recursive: true });
@@ -94,6 +94,6 @@ export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
     attempted: true,
     applied: result.ok,
     error: result.error,
-    pendingChanges: (await getCaddySyncSnapshot()).pendingChanges,
+    pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
   };
 }

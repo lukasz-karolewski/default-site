@@ -1,5 +1,5 @@
 import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
-import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
+import { getCaddySyncStateSnapshot } from "~/lib/data/siteService";
 
 let retryTimer: NodeJS.Timeout | null = null;
 let retryInFlight = false;
@@ -18,7 +18,7 @@ async function runRetryTick() {
 
   retryInFlight = true;
   try {
-    const status = await getCaddySyncSnapshot();
+    const status = await getCaddySyncStateSnapshot();
     if (status.pendingChanges) {
       await syncCaddy();
     }

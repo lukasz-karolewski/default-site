@@ -4,7 +4,7 @@ function localDevPath(relativePath: string): string {
   return path.join(process.cwd(), relativePath);
 }
 
-function preferLocalPathInDev(
+export function preferLocalPathInDev(
   dockerDefault: string,
   localRelative: string,
 ): string {
@@ -12,13 +12,6 @@ function preferLocalPathInDev(
     return localDevPath(localRelative);
   }
   return dockerDefault;
-}
-
-export function getDbPath(): string {
-  return (
-    process.env.DB_PATH ??
-    preferLocalPathInDev("/app/data/sites.db", "data/sites.db")
-  );
 }
 
 export function getCaddyfilePath(): string {

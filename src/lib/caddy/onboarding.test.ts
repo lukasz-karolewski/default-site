@@ -36,7 +36,10 @@ import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
 import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
 import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
-import { ensureOnboardingDraft, runStartupBootstrap } from "./onboarding";
+import {
+  ensureOnboardingDraft,
+  runStartupBootstrap,
+} from "../onboarding/onboarding";
 
 const mockReadFile = vi.mocked(fs.readFile);
 const mockGetSites = vi.mocked(getSites);

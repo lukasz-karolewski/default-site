@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
-import { sha256 } from "~/lib/caddy/caddyHash";
-import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
-import { getCaddyfilePath } from "~/lib/config/runtimePaths";
+import { sha256 } from "~/lib/shared/hash";
+import { getCaddyfilePath } from "~/lib/shared/paths";
+import { getCaddySyncSnapshot } from "~/lib/ui/caddySyncState";
 
 interface CaddyfileSnapshot {
   path: string;

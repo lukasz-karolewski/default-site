@@ -8,11 +8,12 @@ vi.mock("fs/promises", () => ({
   mkdir: vi.fn(),
   writeFile: vi.fn(),
 }));
-vi.mock("~/lib/caddy/caddySyncState", () => ({
+vi.mock("~/lib/data/siteService", () => ({
   markCaddyFailure: vi.fn(),
   markCaddyfileManagedWrite: vi.fn(),
   markCaddyPending: vi.fn(),
   markCaddySuccess: vi.fn(),
+  getCaddySyncStateSnapshot: vi.fn(async () => ({ pendingChanges: false })),
 }));
 vi.mock("~/lib/data/siteConfig", () => ({
   getSiteConfig: vi.fn(async () => ({ caddyApi: "http://localhost:2019" })),
