@@ -23,7 +23,7 @@ vi.mock("~/lib/data/siteConfig", () => ({
 }));
 
 vi.mock("~/lib/caddy/caddySyncPipeline", () => ({
-  applyCaddyConfig: vi.fn(),
+  syncCaddy: vi.fn(),
 }));
 
 vi.mock("~/lib/caddy/caddyRetryLoop", () => ({
@@ -31,22 +31,19 @@ vi.mock("~/lib/caddy/caddyRetryLoop", () => ({
 }));
 
 import fs from "node:fs/promises";
+import { parseSitesFromCaddy } from "~/lib/caddy/caddyfileParser";
 import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
-import { applyCaddyConfig } from "~/lib/caddy/caddySyncPipeline";
+import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
 import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
-import {
-  ensureOnboardingDraft,
-  parseSitesFromCaddy,
-  runStartupBootstrap,
-} from "./onboarding";
+import { ensureOnboardingDraft, runStartupBootstrap } from "./onboarding";
 
 const mockReadFile = vi.mocked(fs.readFile);
 const mockGetSites = vi.mocked(getSites);
 const mockAddSite = vi.mocked(addSite);
 const mockGetSiteConfig = vi.mocked(getSiteConfig);
 const mockUpsertSiteConfig = vi.mocked(upsertSiteConfig);
-const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
+const mockSyncCaddy = vi.mocked(syncCaddy);
 const mockEnsureRetry = vi.mocked(ensureCaddyRetryLoop);
 
 describe("parseSitesFromCaddy", () => {
@@ -64,7 +61,7 @@ describe("onboarding bootstrap", () => {
     vi.clearAllMocks();
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
     mockGetSites.mockResolvedValue([]);
-    mockApplyCaddyConfig.mockResolvedValue({
+    mockSyncCaddy.mockResolvedValue({
       ok: true,
       error: null,
       status: 200,
@@ -109,7 +106,7 @@ describe("onboarding bootstrap", () => {
 
     await runStartupBootstrap();
 
-    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
+    expect(mockSyncCaddy).toHaveBeenCalledOnce();
     expect(mockEnsureRetry).toHaveBeenCalledOnce();
   });
 });

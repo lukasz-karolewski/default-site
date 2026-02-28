@@ -1,12 +1,110 @@
 import fs from "node:fs/promises";
-import {
-  ensureAdminGlobalOptions,
-  extractGlobalOptionsBlock,
-} from "~/lib/caddy/caddyGlobalOptions";
-import { buildManagedSiteBlock } from "~/lib/caddy/caddyRenderManagedBlock";
+import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
 import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
+
+const REQUIRED_ADMIN_BLOCK = `    admin 0.0.0.0:2019 {
+        origins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}
+    }`;
+
+interface Site {
+  host: string;
+  upstream: string;
+}
+
+interface ManagedBlockInput {
+  baseDomain: string;
+  siteBlockDirectives: string;
+  dashboardUpstream: string;
+  sites: Site[];
+}
+
+function matcherName(host: string, baseDomain: string): string {
+  const suffix = `.${baseDomain}`;
+  return host.endsWith(suffix) ? host.slice(0, -suffix.length) : host;
+}
+
+export function buildManagedSiteBlock(input: ManagedBlockInput): string {
+  const { baseDomain, siteBlockDirectives, dashboardUpstream, sites } = input;
+  const header = "# Managed by default-site - do not edit manually.";
+
+  const siteBlocks = sites.map((site) => {
+    const name = matcherName(site.host, baseDomain);
+    return `\t@${name} host ${site.host}\n\thandle @${name} {\n\t\treverse_proxy ${site.upstream}\n\t}`;
+  });
+
+  const inner = [
+    ...siteBlockDirectives.split("\n").map((line) => `\t${line}`),
+    ...siteBlocks,
+    `\thandle {\n\t\treverse_proxy ${dashboardUpstream}\n\t}`,
+  ].join("\n\n");
+
+  return `${header}\n\n*.${baseDomain}, ${baseDomain} {\n${inner}\n}\n`;
+}
+
+export function extractGlobalOptionsBlock(content: string): string {
+  let i = 0;
+
+  while (i < content.length) {
+    while (i < content.length && /\s/.test(content[i])) i++;
+
+    if (content[i] === "#") {
+      while (i < content.length && content[i] !== "\n") i++;
+      continue;
+    }
+    break;
+  }
+
+  if (content[i] !== "{") return "";
+
+  const start = i;
+  let depth = 0;
+  let quote: '"' | "'" | null = null;
+
+  for (; i < content.length; i++) {
+    const ch = content[i];
+
+    if (quote) {
+      if (ch === quote && content[i - 1] !== "\\") quote = null;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+
+    if (ch === "{") {
+      depth++;
+      continue;
+    }
+
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return content.slice(start, i + 1).trim();
+      }
+    }
+  }
+
+  return "";
+}
+
+export function ensureAdminGlobalOptions(globalOptions: string): string {
+  const trimmed = globalOptions.trim();
+  const body = trimmed ? trimmed.replace(/^\{\s*|\s*\}$/g, "") : "";
+
+  const withoutAdmin = body
+    .replace(/^\s*admin\b[^\n{]*\{[\s\S]*?^\s*\}\s*$/gm, "")
+    .replace(/^\s*admin\b[^\n]*$/gm, "")
+    .trim();
+
+  const pieces = withoutAdmin
+    ? [withoutAdmin, REQUIRED_ADMIN_BLOCK]
+    : [REQUIRED_ADMIN_BLOCK];
+  return `{\n${pieces.join("\n\n")}\n}`;
+}
 
 export async function generateCaddyfile(): Promise<string> {
   const siteConfig = await getSiteConfig();

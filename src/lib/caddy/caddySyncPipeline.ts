@@ -2,16 +2,56 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
 import { sha256 } from "~/lib/caddy/caddyHash";
-import { pushConfigToCaddyApi } from "~/lib/caddy/caddyPushConfig";
 import {
+  getCaddySyncSnapshot,
   markCaddyFailure,
   markCaddyfileManagedWrite,
   markCaddyPending,
   markCaddySuccess,
 } from "~/lib/caddy/caddySyncState";
+import { buildCaddyUrl, CADDY_LOAD_PATH } from "~/lib/caddy/caddyUrls";
 import { getCaddyfilePath } from "~/lib/config/runtimePaths";
+import { getSiteConfig } from "~/lib/data/siteConfig";
 
-export type { CaddyApplyResult } from "~/lib/caddy/caddyPushConfig";
+export interface CaddyApplyResult {
+  ok: boolean;
+  error: string | null;
+  status: number | null;
+}
+
+export interface CaddySyncResult {
+  attempted: boolean;
+  applied: boolean;
+  error: string | null;
+  pendingChanges: boolean;
+}
+
+async function pushConfigToCaddyApi(
+  caddyfile: string,
+): Promise<CaddyApplyResult> {
+  const config = await getSiteConfig();
+  const caddyApi = config?.caddyApi ?? "";
+
+  try {
+    const resp = await fetch(buildCaddyUrl(caddyApi, CADDY_LOAD_PATH), {
+      method: "POST",
+      headers: { "Content-Type": "text/caddyfile" },
+      body: caddyfile,
+    });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      const error = `Caddy API error: ${resp.status} ${body}`.trim();
+      return { ok: false, error, status: resp.status };
+    }
+
+    return { ok: true, error: null, status: resp.status };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Unknown Caddy API error";
+    return { ok: false, error: message, status: null };
+  }
+}
 
 export async function renderAndWriteCaddyfile(): Promise<string> {
   const caddyfile = await generateCaddyfile();
@@ -41,4 +81,19 @@ export async function syncCaddy() {
     await markCaddyFailure(message);
     return { ok: false, error: message, status: null };
   }
+}
+
+export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
+  const result = await syncCaddy();
+  if (!result.ok) {
+    const { ensureCaddyRetryLoop } = await import("~/lib/caddy/caddyRetryLoop");
+    ensureCaddyRetryLoop();
+  }
+
+  return {
+    attempted: true,
+    applied: result.ok,
+    error: result.error,
+    pendingChanges: (await getCaddySyncSnapshot()).pendingChanges,
+  };
 }

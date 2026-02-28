@@ -1,6 +1,17 @@
 import fs from "node:fs/promises";
+import {
+  DEFAULT_DASHBOARD_UPSTREAM,
+  DEFAULT_SITE_BLOCK_DIRECTIVES,
+  detectBaseDomainFromWildcardBlock,
+  detectCaddyApiFromGlobalOptions,
+  detectDashboardUpstreamFromWildcardBlock,
+  detectDirectivesFromWildcardBlock,
+  inferBaseDomainFromHosts,
+  parseSitesFromCaddy,
+  uniqueSites,
+} from "~/lib/caddy/caddyfileParser";
 import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
-import { applyCaddyConfig } from "~/lib/caddy/caddySyncPipeline";
+import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
 import { buildCaddyUrl, CADDY_CONFIG_PATH } from "~/lib/caddy/caddyUrls";
 import { getCaddyfilePath } from "~/lib/config/runtimePaths";
 import {
@@ -14,9 +25,6 @@ import {
 } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
 
-const DEFAULT_SITE_BLOCK_DIRECTIVES = `tls internal\nlog`;
-const DEFAULT_DASHBOARD_UPSTREAM = "localhost:3080";
-
 export interface OnboardingDraft {
   baseDomain: string;
   caddyApi: string;
@@ -29,133 +37,6 @@ export interface OnboardingCompletionResult {
   ok: boolean;
   error: string | null;
   manualCommands: string[];
-}
-
-function uniqueSites(sites: Array<{ host: string; upstream: string }>) {
-  const seen = new Set<string>();
-  return sites.filter((site) => {
-    if (seen.has(site.host)) return false;
-    seen.add(site.host);
-    return true;
-  });
-}
-
-export function parseSitesFromCaddy(
-  content: string,
-): Array<{ host: string; upstream: string }> {
-  const results: Array<{ host: string; upstream: string }> = [];
-
-  const simplePattern =
-    /@([\w.-]+)\s+host\s+([\w.-]+)\s*\n\s*reverse_proxy\s+@\1\s+([\w.:-]+)/gm;
-  let match: RegExpExecArray | null;
-  match = simplePattern.exec(content);
-  while (match !== null) {
-    results.push({ host: match[2], upstream: match[3] });
-    match = simplePattern.exec(content);
-  }
-
-  const handlePattern =
-    /@([\w.-]+)\s+host\s+([\w.-]+)\s*\n\s*handle\s+@\1\s*{\s*\n\s*reverse_proxy\s+([\w.:-]+)/gm;
-  match = handlePattern.exec(content);
-  while (match !== null) {
-    results.push({ host: match[2], upstream: match[3] });
-    match = handlePattern.exec(content);
-  }
-
-  return results;
-}
-
-function findBlockBody(content: string, startIndex: number): string {
-  const openIndex = content.indexOf("{", startIndex);
-  if (openIndex < 0) return "";
-
-  let depth = 0;
-  for (let i = openIndex; i < content.length; i++) {
-    if (content[i] === "{") depth++;
-    if (content[i] === "}") {
-      depth--;
-      if (depth === 0) return content.slice(openIndex + 1, i);
-    }
-  }
-
-  return "";
-}
-
-function detectBaseDomainFromWildcardBlock(content: string): string | null {
-  const wildcard = content.match(
-    /\*\.([A-Za-z0-9.-]+)\s*,\s*([A-Za-z0-9.-]+)\s*\{/,
-  );
-  if (!wildcard) return null;
-  const wildcardDomain = normalizeDomain(wildcard[1]);
-  const rootDomain = normalizeDomain(wildcard[2]);
-  return wildcardDomain || rootDomain || null;
-}
-
-function inferBaseDomainFromHosts(hosts: string[]): string | null {
-  const counts = new Map<string, number>();
-
-  for (const host of hosts) {
-    const labels = normalizeDomain(host).split(".").filter(Boolean);
-    for (let i = 1; i < labels.length - 1; i++) {
-      const suffix = labels.slice(i).join(".");
-      counts.set(suffix, (counts.get(suffix) ?? 0) + 1);
-    }
-  }
-
-  if (counts.size === 0) return null;
-
-  return (
-    [...counts.entries()].sort(
-      (a, b) => b[1] - a[1] || b[0].length - a[0].length,
-    )[0][0] ?? null
-  );
-}
-
-function detectDirectivesFromWildcardBlock(content: string): string {
-  const wildcardHeader = content.search(
-    /\*\.[A-Za-z0-9.-]+\s*,\s*[A-Za-z0-9.-]+\s*\{/,
-  );
-  if (wildcardHeader < 0) return DEFAULT_SITE_BLOCK_DIRECTIVES;
-
-  const body = findBlockBody(content, wildcardHeader);
-  if (!body) return DEFAULT_SITE_BLOCK_DIRECTIVES;
-
-  const firstRouteIndex = body.search(
-    /\n\s*@[^\n]+\s+host\s+|\n\s*handle\s+@|\n\s*handle\s*\{/,
-  );
-  const preRoutes =
-    firstRouteIndex >= 0 ? body.slice(0, firstRouteIndex) : body;
-
-  const directives = normalizeDirectives(
-    preRoutes
-      .split("\n")
-      .filter((line) => !/^\s*import\s+/i.test(line))
-      .join("\n"),
-  );
-
-  return directives || DEFAULT_SITE_BLOCK_DIRECTIVES;
-}
-
-function detectCaddyApiFromGlobalOptions(content: string): string {
-  const adminMatch = content.match(/\badmin\s+([^\s{]+)/);
-  return normalizeCaddyApi(adminMatch?.[1] ?? "");
-}
-
-function detectDashboardUpstreamFromWildcardBlock(content: string): string {
-  const wildcardHeader = content.search(
-    /\*\.[A-Za-z0-9.-]+\s*,\s*[A-Za-z0-9.-]+\s*\{/,
-  );
-  if (wildcardHeader < 0) return DEFAULT_DASHBOARD_UPSTREAM;
-  const body = findBlockBody(content, wildcardHeader);
-  if (!body) return DEFAULT_DASHBOARD_UPSTREAM;
-
-  const matches = [
-    ...body.matchAll(/handle\s*\{\s*[\s\S]*?reverse_proxy\s+([^\s}]+)/gm),
-  ];
-  if (matches.length === 0) return DEFAULT_DASHBOARD_UPSTREAM;
-
-  const value = matches[matches.length - 1][1];
-  return normalizeUpstream(value) || DEFAULT_DASHBOARD_UPSTREAM;
 }
 
 async function readCaddyfileSafely(): Promise<string> {
@@ -248,7 +129,7 @@ export async function runStartupBootstrap(): Promise<void> {
     return;
   }
 
-  const result = await applyCaddyConfig();
+  const result = await syncCaddy();
   if (!result.ok) {
     console.warn(
       `[startup] Caddy API unavailable; continuing in degraded mode: ${result.error}`,
@@ -301,7 +182,7 @@ export async function completeOnboarding(input: {
     siteBlockDirectives,
   );
 
-  const apply = await applyCaddyConfig();
+  const apply = await syncCaddy();
   if (apply.ok) {
     ensureCaddyRetryLoop();
     return { ok: true, error: null, manualCommands: [] };

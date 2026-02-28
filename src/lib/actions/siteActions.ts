@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { syncCaddyForCrud } from "~/lib/caddy/caddySyncCrud";
+import { syncCaddyForCrud } from "~/lib/caddy/caddySyncPipeline";
 import { addSite, removeSite, updateSite } from "~/lib/data/siteService";
 
 export interface SiteActionState {

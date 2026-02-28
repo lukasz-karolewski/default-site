@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ensureAdminGlobalOptions,
   extractGlobalOptionsBlock,
-} from "~/lib/caddy/caddyGlobalOptions";
+} from "~/lib/caddy/caddyfileGenerate";
 
 describe("extractGlobalOptionsBlock", () => {
   it("extracts top-level global options block", () => {
