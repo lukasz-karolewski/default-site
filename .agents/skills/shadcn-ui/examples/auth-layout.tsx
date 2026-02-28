@@ -32,7 +32,7 @@ export function AuthLayout() {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted/40">
-			<Tabs defaultValue="login" className="w-[400px]">
+			<Tabs defaultValue="login" className="w-100">
 				<TabsList className="grid w-full grid-cols-2">
 					<TabsTrigger value="login">Login</TabsTrigger>
 					<TabsTrigger value="register">Register</TabsTrigger>

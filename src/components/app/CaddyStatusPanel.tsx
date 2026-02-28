@@ -103,13 +103,13 @@ export default function CaddyStatusPanel() {
             type="button"
             onClick={retrySyncNow}
             disabled={retrying}
-            className="mt-4 border-2 border-black bg-black px-3 py-2 text-sm font-black uppercase tracking-[0.1em] text-white transition hover:bg-zinc-800 disabled:opacity-60"
+            className="mt-4 border-2 border-black bg-black px-3 py-2 text-sm font-black uppercase tracking-widest text-white transition hover:bg-zinc-800 disabled:opacity-60"
           >
             {retrying ? "Retrying..." : "Retry sync now"}
           </button>
           <a
             href="/onboarding?edit=1"
-            className="ml-2 mt-4 inline-flex border-2 border-black bg-white px-3 py-2 text-sm font-black uppercase tracking-[0.1em] text-zinc-900 transition hover:bg-zinc-100"
+            className="ml-2 mt-4 inline-flex border-2 border-black bg-white px-3 py-2 text-sm font-black uppercase tracking-widest text-zinc-900 transition hover:bg-zinc-100"
           >
             Update onboarding settings
           </a>
