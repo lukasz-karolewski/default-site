@@ -1,4 +1,4 @@
-import { applyCaddyConfig } from "~/lib/caddy/caddyApi";
+import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
 import { ensureCaddyRetryLoop } from "~/lib/caddy/caddySyncScheduler";
 import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
 
@@ -10,7 +10,7 @@ export interface CaddySyncResult {
 }
 
 export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
-  const result = await applyCaddyConfig();
+  const result = await syncCaddy();
   if (!result.ok) {
     ensureCaddyRetryLoop();
   }

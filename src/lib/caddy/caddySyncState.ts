@@ -16,6 +16,19 @@ export interface CaddySyncSnapshot {
   lastManagedWriteHash: string | null;
 }
 
+type MutableStateFields = Partial<
+  Pick<
+    typeof caddySyncState.$inferInsert,
+    | "connected"
+    | "lastError"
+    | "lastAttemptAt"
+    | "lastSuccessAt"
+    | "pendingChanges"
+    | "lastManagedWriteAt"
+    | "lastManagedWriteHash"
+  >
+>;
+
 async function ensureStateRow() {
   await getDb()
     .insert(caddySyncState)
@@ -37,65 +50,53 @@ async function readStateRow() {
     .get();
 }
 
+async function updateState(fields: MutableStateFields) {
+  await ensureStateRow();
+  await getDb()
+    .update(caddySyncState)
+    .set(fields)
+    .where(eq(caddySyncState.id, STATE_ID))
+    .run();
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
 
 export async function markCaddyPending() {
-  await ensureStateRow();
-  await getDb()
-    .update(caddySyncState)
-    .set({ pendingChanges: true })
-    .where(eq(caddySyncState.id, STATE_ID))
-    .run();
+  await updateState({ pendingChanges: true });
 }
 
 export async function markCaddySuccess() {
   const at = nowIso();
-  await ensureStateRow();
-  await getDb()
-    .update(caddySyncState)
-    .set({
-      connected: true,
-      lastError: null,
-      lastAttemptAt: at,
-      lastSuccessAt: at,
-      pendingChanges: false,
-    })
-    .where(eq(caddySyncState.id, STATE_ID))
-    .run();
+  await updateState({
+    connected: true,
+    lastError: null,
+    lastAttemptAt: at,
+    lastSuccessAt: at,
+    pendingChanges: false,
+  });
 }
 
 export async function markCaddyFailure(error: string) {
-  await ensureStateRow();
-  await getDb()
-    .update(caddySyncState)
-    .set({
-      connected: false,
-      lastError: error,
-      lastAttemptAt: nowIso(),
-      pendingChanges: true,
-    })
-    .where(eq(caddySyncState.id, STATE_ID))
-    .run();
+  await updateState({
+    connected: false,
+    lastError: error,
+    lastAttemptAt: nowIso(),
+    pendingChanges: true,
+  });
 }
 
 export async function markCaddyfileManagedWrite(hash: string) {
-  await ensureStateRow();
-  await getDb()
-    .update(caddySyncState)
-    .set({
-      lastManagedWriteAt: nowIso(),
-      lastManagedWriteHash: hash,
-    })
-    .where(eq(caddySyncState.id, STATE_ID))
-    .run();
+  await updateState({
+    lastManagedWriteAt: nowIso(),
+    lastManagedWriteHash: hash,
+  });
 }
 
 export async function getCaddySyncSnapshot(): Promise<CaddySyncSnapshot> {
   const row = await readStateRow();
   const config = await getSiteConfig();
-  const caddyApi = config?.caddyApi ?? "";
 
   return {
     connected: row?.connected ?? true,
@@ -103,7 +104,7 @@ export async function getCaddySyncSnapshot(): Promise<CaddySyncSnapshot> {
     lastAttemptAt: row?.lastAttemptAt ?? null,
     lastSuccessAt: row?.lastSuccessAt ?? null,
     pendingChanges: row?.pendingChanges ?? false,
-    caddyApiUrl: caddyApi,
+    caddyApiUrl: config?.caddyApi ?? "",
     lastManagedWriteAt: row?.lastManagedWriteAt ?? null,
     lastManagedWriteHash: row?.lastManagedWriteHash ?? null,
   };

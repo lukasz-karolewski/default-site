@@ -32,7 +32,10 @@ function DiagnosticSection({
       </h4>
       <dl className="mt-1 space-y-1">
         {items.map((item) => (
-          <div key={`${title}-${item.label}`} className="grid grid-cols-[150px_1fr] gap-2">
+          <div
+            key={`${title}-${item.label}`}
+            className="grid grid-cols-[150px_1fr] gap-2"
+          >
             <dt className="text-muted-foreground">{item.label}</dt>
             <dd className="break-all text-foreground/90">{item.value}</dd>
           </div>
@@ -63,7 +66,8 @@ export default function FooterStatus() {
       status.lastSuccessAt &&
       status.lastAttemptAt !== status.lastSuccessAt,
   );
-  const showHashDetails = status.caddyfile.changedSinceLastManagedWrite !== false;
+  const showHashDetails =
+    status.caddyfile.changedSinceLastManagedWrite !== false;
 
   const syncItems: DiagnosticItem[] = [
     { label: "Connected", value: status.connected ? "yes" : "no" },
@@ -82,7 +86,10 @@ export default function FooterStatus() {
   const caddyfileItems: DiagnosticItem[] = [
     { label: "Path", value: status.caddyfile.path || "unavailable" },
     { label: "Exists", value: status.caddyfile.exists ? "yes" : "no" },
-    { label: "Last app write", value: formatTimestamp(status.lastManagedWriteAt) },
+    {
+      label: "Last app write",
+      value: formatTimestamp(status.lastManagedWriteAt),
+    },
     {
       label: "Last disk update",
       value: formatTimestamp(status.caddyfile.modifiedAt),
@@ -106,7 +113,9 @@ export default function FooterStatus() {
   ];
 
   const errorItems: DiagnosticItem[] = [
-    ...(status.lastError ? [{ label: "Last sync error", value: status.lastError }] : []),
+    ...(status.lastError
+      ? [{ label: "Last sync error", value: status.lastError }]
+      : []),
     ...(status.caddyfile.readError
       ? [{ label: "Caddyfile read error", value: status.caddyfile.readError }]
       : []),
@@ -116,7 +125,8 @@ export default function FooterStatus() {
     <footer className="mt-auto border-t border-border pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <p aria-live="polite">
-          Status: {summary} · Pending changes: {status.pendingChanges ? "yes" : "no"}
+          Status: {summary} · Pending changes:{" "}
+          {status.pendingChanges ? "yes" : "no"}
         </p>
         <div className="flex items-center gap-2">
           {showDiagnostics ? (

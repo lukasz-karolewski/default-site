@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./caddyfileGen", () => ({ generateCaddyfile: vi.fn() }));
+vi.mock("~/lib/caddy/caddyfileGenerate", () => ({
+  generateCaddyfile: vi.fn(),
+}));
 vi.mock("fs/promises", () => ({
-  default: { writeFile: vi.fn() },
+  default: { mkdir: vi.fn(), writeFile: vi.fn() },
+  mkdir: vi.fn(),
   writeFile: vi.fn(),
 }));
 vi.mock("~/lib/caddy/caddySyncState", () => ({
@@ -14,10 +17,13 @@ vi.mock("~/lib/caddy/caddySyncState", () => ({
 vi.mock("~/lib/data/siteConfig", () => ({
   getSiteConfig: vi.fn(async () => ({ caddyApi: "http://localhost:2019" })),
 }));
+vi.mock("~/lib/config/runtimePaths", () => ({
+  getCaddyfilePath: vi.fn(() => "/app/Caddyfile"),
+}));
 
 import fs from "node:fs/promises";
+import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
 import { applyCaddyConfig } from "./caddyApi";
-import { generateCaddyfile } from "./caddyfileGen";
 
 const mockGenerateCaddyfile = vi.mocked(generateCaddyfile);
 const mockWriteFile = vi.mocked(fs.writeFile);
