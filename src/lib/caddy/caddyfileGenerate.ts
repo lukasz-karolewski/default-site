@@ -1,8 +1,5 @@
 import fs from "node:fs/promises";
-import {
-  extractGlobalOptionsBlock,
-  type ParsedSite,
-} from "~/lib/caddy/caddyfileParser";
+import { extractGlobalOptionsBlock } from "~/lib/caddy/caddyfileParser";
 import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
@@ -16,12 +13,7 @@ interface ManagedBlockInput {
   baseDomain: string;
   siteBlockDirectives: string;
   dashboardUpstream: string;
-  sites: ParsedSite[];
-}
-
-function matcherName(host: string, baseDomain: string): string {
-  const suffix = `.${baseDomain}`;
-  return host.endsWith(suffix) ? host.slice(0, -suffix.length) : host;
+  sites: { subdomain: string; upstream: string }[];
 }
 
 function buildManagedSiteBlock(input: ManagedBlockInput): string {
@@ -29,8 +21,8 @@ function buildManagedSiteBlock(input: ManagedBlockInput): string {
   const header = "# Managed by default-site - do not edit manually.";
 
   const siteBlocks = sites.map((site) => {
-    const name = matcherName(site.host, baseDomain);
-    return `\t@${name} host ${site.host}\n\thandle @${name} {\n\t\treverse_proxy ${site.upstream}\n\t}`;
+    const fullHost = `${site.subdomain}.${baseDomain}`;
+    return `\t@${site.subdomain} host ${fullHost}\n\thandle @${site.subdomain} {\n\t\treverse_proxy ${site.upstream}\n\t}`;
   });
 
   const inner = [

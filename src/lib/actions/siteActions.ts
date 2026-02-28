@@ -21,18 +21,25 @@ function toNotice(
 
 async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
   const id = (formData.get("id")?.toString() ?? "").trim();
-  const host = (formData.get("host")?.toString() ?? "").trim();
+  const subdomain = (formData.get("subdomain")?.toString() ?? "").trim().toLowerCase();
   const upstream = (formData.get("upstream")?.toString() ?? "").trim();
 
-  if (!host || !upstream) {
-    return { ok: false, message: "Host and upstream are required." };
+  if (!subdomain || !upstream) {
+    return { ok: false, message: "Subdomain and upstream are required." };
+  }
+
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(subdomain)) {
+    return {
+      ok: false,
+      message: "Subdomain may only contain letters, digits, and hyphens.",
+    };
   }
 
   try {
     if (id) {
-      await updateSite(id, host, upstream);
+      await updateSite(id, subdomain, upstream);
     } else {
-      await addSite(host, upstream);
+      await addSite(subdomain, upstream);
     }
 
     const sync = await syncCaddy();

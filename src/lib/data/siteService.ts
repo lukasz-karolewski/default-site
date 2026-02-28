@@ -62,10 +62,10 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-export async function addSite(host: string, upstream: string) {
+export async function addSite(subdomain: string, upstream: string) {
   return getDb()
     .insert(sites)
-    .values({ id: randomUUID(), host, upstream })
+    .values({ id: randomUUID(), subdomain, upstream })
     .run();
 }
 
@@ -77,10 +77,10 @@ export async function removeSite(id: string) {
   return getDb().delete(sites).where(eq(sites.id, id)).run();
 }
 
-export async function updateSite(id: string, host: string, upstream: string) {
+export async function updateSite(id: string, subdomain: string, upstream: string) {
   return getDb()
     .update(sites)
-    .set({ host, upstream })
+    .set({ subdomain, upstream })
     .where(eq(sites.id, id))
     .run();
 }

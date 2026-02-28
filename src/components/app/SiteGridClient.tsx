@@ -10,7 +10,7 @@ import SiteEditModal from "./SiteEditModal";
 
 interface SiteRecord {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 
@@ -35,7 +35,7 @@ export default function SiteGridClient({
   const sortedSites = useMemo(
     () =>
       [...sites].sort((a, b) =>
-        a.host.localeCompare(b.host, undefined, { sensitivity: "base" }),
+        a.subdomain.localeCompare(b.subdomain, undefined, { sensitivity: "base" }),
       ),
     [sites],
   );
@@ -86,7 +86,7 @@ export default function SiteGridClient({
 
       <section className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
         {sortedSites.map((site) => {
-          const siteUrl = buildSiteUrl(site.host, baseDomain);
+          const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
           const faviconUrl = buildFaviconUrl(siteUrl);
           const tileClasses =
             "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
@@ -99,7 +99,7 @@ export default function SiteGridClient({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={tileClasses}
-                aria-label={`Open ${site.host}`}
+                aria-label={`Open ${site.subdomain}`}
               >
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <img
@@ -113,7 +113,7 @@ export default function SiteGridClient({
                     }}
                   />
                   <p className="text-lg font-bold text-foreground transition-transform duration-200 group-hover:-translate-y-1.5 sm:text-xl">
-                    {site.host}
+                    {site.subdomain}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 translate-y-1">
                     {site.upstream}
@@ -138,7 +138,7 @@ export default function SiteGridClient({
                     }}
                   />
                   <p className="text-lg font-bold text-foreground sm:text-xl">
-                    {site.host}
+                    {site.subdomain}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground opacity-80">
                     {site.upstream}

@@ -88,7 +88,7 @@ describe("onboarding bootstrap", () => {
     await ensureOnboardingDraft();
 
     expect(mockAddSite).toHaveBeenCalledWith(
-      "ha.example.com",
+      "ha",
       "localhost:8123",
     );
   });

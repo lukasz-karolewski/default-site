@@ -77,17 +77,20 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft> {
     ? uniqueSites(parseSitesFromCaddy(caddyfile))
     : [];
 
-  const existingSites = await getSites();
-  if (existingSites.length === 0) {
-    for (const site of parsedSites) {
-      await addSite(site.host, site.upstream);
-    }
-  }
-
   const baseDomain =
     (caddyfile && detectBaseDomainFromWildcardBlock(caddyfile)) ??
     inferBaseDomainFromHosts(parsedSites.map((site) => site.host)) ??
     "localhost";
+
+  const existingSites = await getSites();
+  if (existingSites.length === 0) {
+    for (const site of parsedSites) {
+      const subdomain = site.host.endsWith(`.${baseDomain}`)
+        ? site.host.slice(0, -(baseDomain.length + 1))
+        : site.host;
+      await addSite(subdomain, site.upstream);
+    }
+  }
 
   const siteBlockDirectives = caddyfile
     ? detectDirectivesFromWildcardBlock(caddyfile)

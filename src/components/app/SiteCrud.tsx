@@ -4,7 +4,7 @@ import PublishedSitesPanel from "./PublishedSitesPanel";
 
 interface Site {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 

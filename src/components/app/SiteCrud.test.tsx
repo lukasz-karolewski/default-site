@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSiteUrl } from "~/lib/sites/siteLink";
+import { buildSiteUrl } from "~/lib/ui/siteLink";
 
 describe("buildSiteUrl", () => {
   it("appends the root domain for subdomain labels", () => {

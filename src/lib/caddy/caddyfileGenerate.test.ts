@@ -49,7 +49,7 @@ describe("generateCaddyfile", () => {
 
   it("generates matcher blocks for sites", async () => {
     mockGetSites.mockResolvedValue([
-      { id: "1", host: "ha.test.com", upstream: "localhost:8123" },
+      { id: "1", subdomain: "ha", upstream: "localhost:8123" },
     ]);
 
     const result = await generateCaddyfile();
