@@ -40,6 +40,25 @@ No `BASE_DOMAIN`. No `Caddyfile.custom`.
 - Mount host Caddyfile to `/app/Caddyfile`
 - Mount app DB storage to `/app/data`
 
+## Troubleshooting Caddy API Connectivity
+
+If the app reports `fetch failed` when syncing with Caddy, verify the stored `caddyApi` value.
+
+- `0.0.0.0` is a bind/listen address, not a routable client destination.
+- From the app container, `http://0.0.0.0:2019` can fail with `ECONNREFUSED`.
+- Use a reachable host endpoint instead, typically `http://host.docker.internal:2019` (Linux compose in this repo already sets `extra_hosts: host.docker.internal:host-gateway`).
+
+Common failure pattern:
+
+1. Caddyfile contains `admin 0.0.0.0:2019`.
+2. Onboarding/import detects this and stores it as `caddyApi`.
+3. App tries to call `http://0.0.0.0:2019/load` and sync fails.
+
+Fix:
+
+1. Update onboarding settings and set `caddyApi` to `http://host.docker.internal:2019` (or your host IP).
+2. Retry sync from the dashboard.
+
 ## Environment variables
 
 | Variable              | Default                         | Description |
