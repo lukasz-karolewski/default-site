@@ -110,6 +110,7 @@ export default function FooterStatus() {
               <Button
                 size="xs"
                 variant="outline"
+                nativeButton={false}
                 render={<Link href="/onboarding?edit=1" />}
               >
                 Update onboarding settings

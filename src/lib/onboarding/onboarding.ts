@@ -212,7 +212,9 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft> {
   const siteBlockDirectives = caddyfile
     ? detectDirectivesFromWildcardBlock(caddyfile)
     : DEFAULT_SITE_BLOCK_DIRECTIVES;
+
   const caddyApi = caddyfile ? detectCaddyApiFromGlobalOptions(caddyfile) : "";
+
   const dashboardUpstream = caddyfile
     ? detectDashboardUpstreamFromWildcardBlock(caddyfile)
     : DEFAULT_DASHBOARD_UPSTREAM;
