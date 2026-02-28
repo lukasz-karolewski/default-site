@@ -1,24 +1,22 @@
 import fs from "node:fs/promises";
-import { extractGlobalOptionsBlock } from "~/lib/caddy/caddyfileParser";
+import {
+  extractGlobalOptionsBlock,
+  type ParsedSite,
+} from "~/lib/caddy/caddyfileParser";
 import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
 import { getCaddyfilePath } from "~/lib/shared/paths";
 
-const REQUIRED_ADMIN_BLOCK = `    admin 0.0.0.0:2019 {
-        origins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}
-    }`;
-
-interface Site {
-  host: string;
-  upstream: string;
-}
+const REQUIRED_ADMIN_BLOCK = `\tadmin 0.0.0.0:2019 {
+\t\torigins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}
+\t}`;
 
 interface ManagedBlockInput {
   baseDomain: string;
   siteBlockDirectives: string;
   dashboardUpstream: string;
-  sites: Site[];
+  sites: ParsedSite[];
 }
 
 function matcherName(host: string, baseDomain: string): string {
@@ -36,7 +34,7 @@ function buildManagedSiteBlock(input: ManagedBlockInput): string {
   });
 
   const inner = [
-    ...siteBlockDirectives.split("\n").map((line) => `\t${line}`),
+    ...siteBlockDirectives.split("\n").filter((line) => line.trim()).map((line) => `\t${line}`),
     ...siteBlocks,
     `\thandle {\n\t\treverse_proxy ${dashboardUpstream}\n\t}`,
   ].join("\n\n");
@@ -67,23 +65,20 @@ export async function generateCaddyfile(): Promise<string> {
     );
   }
 
+  const [sites, existingCaddyfile] = await Promise.all([
+    getSites(),
+    fs.readFile(getCaddyfilePath(), "utf8").catch(() => ""),
+  ]);
+
   const managedBlock = buildManagedSiteBlock({
     baseDomain: siteConfig.baseDomain,
     siteBlockDirectives: siteConfig.siteBlockDirectives,
     dashboardUpstream: siteConfig.dashboardUpstream,
-    sites: await getSites(),
+    sites,
   });
 
-  let globalOptions = "";
-  try {
-    const existingCaddyfile = await fs.readFile(getCaddyfilePath(), "utf8");
-    globalOptions = extractGlobalOptionsBlock(existingCaddyfile);
-  } catch {
-    // Existing file is optional; generate without global options when unavailable.
-  }
-
-  const normalizedGlobalOptions = ensureAdminGlobalOptions(globalOptions);
-  return normalizedGlobalOptions
-    ? `${normalizedGlobalOptions}\n\n${managedBlock}`
-    : managedBlock;
+  const normalizedGlobalOptions = ensureAdminGlobalOptions(
+    extractGlobalOptionsBlock(existingCaddyfile),
+  );
+  return `${normalizedGlobalOptions}\n\n${managedBlock}`;
 }
