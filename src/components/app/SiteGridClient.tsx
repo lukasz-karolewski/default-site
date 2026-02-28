@@ -56,7 +56,7 @@ export default function SiteGridClient({
     <NoticeProvider>
       <section className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <h1 className="text-sm font-medium uppercase tracking-[0.18em] text-foreground/90">
-          Sites
+          {baseDomain} sites
         </h1>
         <div className="flex items-center gap-2">
           <Button
