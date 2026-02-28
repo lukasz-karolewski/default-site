@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  ensureAdminGlobalOptions,
-  extractGlobalOptionsBlock,
-  generateCaddyfile,
-} from "./caddyfileGenerate";
+import { extractGlobalOptionsBlock } from "./caddyfileParser";
+import { generateCaddyfile } from "./caddyfileGenerate";
 
 vi.mock("~/lib/data/siteService", () => ({
   getSites: vi.fn(),
@@ -121,18 +118,5 @@ example.com {
     expect(extractGlobalOptionsBlock('example.com {\n respond "ok"\n}\n')).toBe(
       "",
     );
-  });
-});
-
-describe("ensureAdminGlobalOptions", () => {
-  it("replaces existing admin directive and preserves other directives", () => {
-    const options = ensureAdminGlobalOptions(`{
-  email admin@example.com
-  admin localhost:2019
-}`);
-
-    expect(options).toContain("email admin@example.com");
-    expect(options).toContain("admin 0.0.0.0:2019");
-    expect(options).not.toContain("admin localhost:2019");
   });
 });

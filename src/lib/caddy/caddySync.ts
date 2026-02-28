@@ -13,7 +13,7 @@ import { getSiteConfig } from "~/lib/data/siteConfig";
 import { sha256 } from "~/lib/shared/hash";
 import { getCaddyfilePath } from "~/lib/shared/paths";
 
-export interface CaddyApplyResult {
+interface CaddyApplyResult {
   ok: boolean;
   error: string | null;
   status: number | null;
@@ -23,6 +23,7 @@ export interface CaddySyncResult {
   attempted: boolean;
   applied: boolean;
   error: string | null;
+  status: number | null;
   pendingChanges: boolean;
 }
 
@@ -62,7 +63,7 @@ async function renderAndWriteCaddyfile(): Promise<string> {
   return caddyfile;
 }
 
-export async function syncCaddy() {
+export async function syncCaddy(): Promise<CaddySyncResult> {
   try {
     const caddyfile = await renderAndWriteCaddyfile();
     await markCaddyPending();
@@ -70,30 +71,33 @@ export async function syncCaddy() {
 
     if (!result.ok) {
       await markCaddyFailure(result.error ?? "Unknown Caddy API error");
-      return result;
+      return {
+        attempted: true,
+        applied: false,
+        error: result.error,
+        status: result.status,
+        pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+      };
     }
 
     await markCaddySuccess();
-    return result;
+    return {
+      attempted: true,
+      applied: true,
+      error: null,
+      status: result.status,
+      pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+    };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown Caddy apply error";
     await markCaddyFailure(message);
-    return { ok: false, error: message, status: null };
-  }
-}
-
-export async function syncCaddyForCrud(): Promise<CaddySyncResult> {
-  const result = await syncCaddy();
-  if (!result.ok) {
-    const { ensureCaddyRetryLoop } = await import("~/lib/caddy/caddyRetryLoop");
-    ensureCaddyRetryLoop();
-  }
-
-  return {
-    attempted: true,
-    applied: result.ok,
-    error: result.error,
-    pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+    return {
+      attempted: true,
+      applied: false,
+      error: message,
+      status: null,
+      pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+    };
   };
 }

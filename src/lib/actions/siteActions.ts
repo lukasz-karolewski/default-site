@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { syncCaddyForCrud } from "~/lib/caddy/caddySyncPipeline";
+import { syncCaddy } from "~/lib/caddy/caddySync";
 import { addSite, removeSite, updateSite } from "~/lib/data/siteService";
 
 export interface SiteActionState {
@@ -35,7 +35,7 @@ async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
       await addSite(host, upstream);
     }
 
-    const sync = await syncCaddyForCrud();
+    const sync = await syncCaddy();
     revalidatePath("/");
     return {
       ok: true,
@@ -59,7 +59,7 @@ async function runDeleteSiteAction(
 
   try {
     await removeSite(id);
-    const sync = await syncCaddyForCrud();
+    const sync = await syncCaddy();
     revalidatePath("/");
     return { ok: true, message: toNotice("Site deleted.", sync) };
   } catch (error: unknown) {

@@ -10,8 +10,7 @@ import {
   parseSitesFromCaddy,
   uniqueSites,
 } from "~/lib/caddy/caddyfileParser";
-import { ensureCaddyRetryLoop } from "~/lib/caddy/caddyRetryLoop";
-import { syncCaddy } from "~/lib/caddy/caddySyncPipeline";
+import { syncCaddy } from "~/lib/caddy/caddySync";
 import { buildCaddyUrl, CADDY_CONFIG_PATH } from "~/lib/caddy/caddyUrls";
 import {
   getSiteConfig,
@@ -130,12 +129,11 @@ export async function runStartupBootstrap(): Promise<void> {
   }
 
   const result = await syncCaddy();
-  if (!result.ok) {
+  if (!result.applied) {
     console.warn(
       `[startup] Caddy API unavailable; continuing in degraded mode: ${result.error}`,
     );
   }
-  ensureCaddyRetryLoop();
 }
 
 export async function completeOnboarding(input: {
@@ -183,12 +181,10 @@ export async function completeOnboarding(input: {
   );
 
   const apply = await syncCaddy();
-  if (apply.ok) {
-    ensureCaddyRetryLoop();
+  if (apply.applied) {
     return { ok: true, error: null, manualCommands: [] };
   }
 
-  ensureCaddyRetryLoop();
   return {
     ok: false,
     error: apply.error ?? "Failed to apply Caddy config.",

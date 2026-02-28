@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { extractGlobalOptionsBlock } from "~/lib/caddy/caddyfileParser";
 import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
@@ -25,7 +26,7 @@ function matcherName(host: string, baseDomain: string): string {
   return host.endsWith(suffix) ? host.slice(0, -suffix.length) : host;
 }
 
-export function buildManagedSiteBlock(input: ManagedBlockInput): string {
+function buildManagedSiteBlock(input: ManagedBlockInput): string {
   const { baseDomain, siteBlockDirectives, dashboardUpstream, sites } = input;
   const header = "# Managed by default-site - do not edit manually.";
 
@@ -43,55 +44,7 @@ export function buildManagedSiteBlock(input: ManagedBlockInput): string {
   return `${header}\n\n*.${baseDomain}, ${baseDomain} {\n${inner}\n}\n`;
 }
 
-export function extractGlobalOptionsBlock(content: string): string {
-  let i = 0;
-
-  while (i < content.length) {
-    while (i < content.length && /\s/.test(content[i])) i++;
-
-    if (content[i] === "#") {
-      while (i < content.length && content[i] !== "\n") i++;
-      continue;
-    }
-    break;
-  }
-
-  if (content[i] !== "{") return "";
-
-  const start = i;
-  let depth = 0;
-  let quote: '"' | "'" | null = null;
-
-  for (; i < content.length; i++) {
-    const ch = content[i];
-
-    if (quote) {
-      if (ch === quote && content[i - 1] !== "\\") quote = null;
-      continue;
-    }
-
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-
-    if (ch === "{") {
-      depth++;
-      continue;
-    }
-
-    if (ch === "}") {
-      depth--;
-      if (depth === 0) {
-        return content.slice(start, i + 1).trim();
-      }
-    }
-  }
-
-  return "";
-}
-
-export function ensureAdminGlobalOptions(globalOptions: string): string {
+function ensureAdminGlobalOptions(globalOptions: string): string {
   const trimmed = globalOptions.trim();
   const body = trimmed ? trimmed.replace(/^\{\s*|\s*\}$/g, "") : "";
 

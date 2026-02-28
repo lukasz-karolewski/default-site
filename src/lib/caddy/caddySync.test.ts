@@ -24,7 +24,7 @@ vi.mock("~/lib/config/runtimePaths", () => ({
 
 import fs from "node:fs/promises";
 import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
-import { syncCaddy } from "./caddySyncPipeline";
+import { syncCaddy } from "./caddySync";
 
 const mockGenerateCaddyfile = vi.mocked(generateCaddyfile);
 const mockWriteFile = vi.mocked(fs.writeFile);
@@ -69,8 +69,9 @@ describe("syncCaddy", () => {
 
     const result = await syncCaddy();
 
-    expect(result.ok).toBe(false);
+    expect(result.applied).toBe(false);
     expect(result.status).toBe(500);
     expect(result.error).toContain("Caddy API error: 500");
+    expect(typeof result.pendingChanges).toBe("boolean");
   });
 });
