@@ -2,7 +2,7 @@ import { buildSiteUrl } from "~/lib/sites/siteLink";
 
 interface Site {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 
@@ -37,7 +37,7 @@ export default function PublishedSitesPanel({
           </li>
         )}
         {sites.map((site) => {
-          const siteUrl = buildSiteUrl(site.host, baseDomain);
+          const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
 
           return (
             <li key={site.id} className="border-2 border-zinc-900 bg-white p-4">
@@ -49,7 +49,7 @@ export default function PublishedSitesPanel({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {site.host}
+                    {site.subdomain}
                   </a>
                   <p className="text-sm font-semibold text-zinc-700">
                     Routes to {site.upstream}

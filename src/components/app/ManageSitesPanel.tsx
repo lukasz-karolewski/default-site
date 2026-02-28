@@ -2,7 +2,7 @@ import { deleteSiteAction, saveSiteAction } from "~/lib/actions/siteActions";
 
 interface Site {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 
@@ -29,7 +29,7 @@ export default function ManageSitesPanel({
     <section className="brutal-panel p-5">
       <h2 className="brutal-title text-2xl text-zinc-900">Manage Sites</h2>
       <p className="mt-1 text-sm font-semibold text-zinc-700">
-        Create and update host routing records.
+        Create and update subdomain routing records.
       </p>
 
       {notice && (
@@ -48,9 +48,9 @@ export default function ManageSitesPanel({
         <input type="hidden" name="id" value={editingSite?.id ?? ""} />
         <input
           className="border-2 border-black bg-white p-2 font-semibold text-zinc-900 placeholder:text-zinc-500 focus:outline-none md:col-span-2"
-          placeholder="Host (e.g. app)"
-          name="host"
-          defaultValue={editingSite?.host ?? ""}
+          placeholder="Subdomain (e.g. app)"
+          name="subdomain"
+          defaultValue={editingSite?.subdomain ?? ""}
           required
         />
         <input

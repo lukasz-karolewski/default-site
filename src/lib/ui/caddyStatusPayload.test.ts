@@ -9,17 +9,17 @@ vi.mock("fs/promises", () => ({
   readFile: vi.fn(),
 }));
 
-vi.mock("~/lib/config/runtimePaths", () => ({
+vi.mock("~/lib/shared/paths", () => ({
   getCaddyfilePath: vi.fn(() => "/app/Caddyfile"),
 }));
 
-vi.mock("~/lib/caddy/caddySyncState", () => ({
+vi.mock("~/lib/ui/caddySyncState", () => ({
   getCaddySyncSnapshot: vi.fn(),
 }));
 
 import fs from "node:fs/promises";
-import { buildCaddyStatusPayload } from "~/lib/caddy/caddyStatusPayload";
-import { getCaddySyncSnapshot } from "~/lib/caddy/caddySyncState";
+import { buildCaddyStatusPayload } from "~/lib/ui/caddyStatusPayload";
+import { getCaddySyncSnapshot } from "~/lib/ui/caddySyncState";
 
 const mockStat = vi.mocked(fs.stat);
 const mockReadFile = vi.mocked(fs.readFile);

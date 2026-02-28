@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { buildCaddyStatusPayload } from "~/lib/caddy/caddyStatusPayload";
-import { retryCaddyNow } from "~/lib/caddy/caddySyncScheduler";
+import { syncCaddy } from "~/lib/caddy/caddySync";
+import { buildCaddyStatusPayload } from "~/lib/ui/caddyStatusPayload";
 
 export async function POST() {
-  const result = await retryCaddyNow();
+  const result = await syncCaddy();
   return NextResponse.json({
     ok: true,
     retry: result,

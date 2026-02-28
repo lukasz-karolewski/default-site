@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { generateCaddyfile } from "./caddyfileGen";
+import { extractGlobalOptionsBlock } from "./caddyfileParser";
+import { generateCaddyfile } from "./caddyfileGenerate";
 
 vi.mock("~/lib/data/siteService", () => ({
   getSites: vi.fn(),
@@ -48,7 +49,7 @@ describe("generateCaddyfile", () => {
 
   it("generates matcher blocks for sites", async () => {
     mockGetSites.mockResolvedValue([
-      { id: "1", host: "ha.test.com", upstream: "localhost:8123" },
+      { id: "1", subdomain: "ha", upstream: "localhost:8123" },
     ]);
 
     const result = await generateCaddyfile();
@@ -93,5 +94,29 @@ example.com {
     expect(result).toContain("email admin@example.com");
     expect(result).toContain("admin 0.0.0.0:2019 {");
     expect(result).toContain("*.test.com, test.com {");
+  });
+});
+
+describe("extractGlobalOptionsBlock", () => {
+  it("extracts top-level global options block", () => {
+    const block = extractGlobalOptionsBlock(`
+# comment
+{
+  email admin@example.com
+}
+
+example.com {
+  respond "ok"
+}
+`);
+
+    expect(block).toContain("email admin@example.com");
+    expect(block.startsWith("{")).toBe(true);
+  });
+
+  it("returns empty string when no global options are present", () => {
+    expect(extractGlobalOptionsBlock('example.com {\n respond "ok"\n}\n')).toBe(
+      "",
+    );
   });
 });

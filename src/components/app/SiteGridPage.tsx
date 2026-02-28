@@ -3,7 +3,7 @@ import SiteGridClient from "./SiteGridClient";
 
 export interface SiteRecord {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 

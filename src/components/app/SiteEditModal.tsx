@@ -22,7 +22,7 @@ import { useNotice } from "~/lib/ui/noticeContext";
 
 interface SiteRecord {
   id: string;
-  host: string;
+  subdomain: string;
   upstream: string;
 }
 
@@ -86,12 +86,12 @@ export default function SiteEditModal({
           <input type="hidden" name="id" value={site?.id ?? ""} />
 
           <div className="grid gap-1.5">
-            <Label htmlFor="host">Subdomain</Label>
+            <Label htmlFor="subdomain">Subdomain</Label>
             <Input
-              id="host"
-              name="host"
+              id="subdomain"
+              name="subdomain"
               placeholder="app"
-              defaultValue={site?.host ?? ""}
+              defaultValue={site?.subdomain ?? ""}
               required
             />
           </div>

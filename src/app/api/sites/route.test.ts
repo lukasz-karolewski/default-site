@@ -13,7 +13,7 @@ describe("GET /api/sites", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns the site list as JSON", async () => {
-    const sites = [{ id: "1", host: "a.com", upstream: "localhost:3000" }];
+    const sites = [{ id: "1", subdomain: "a", upstream: "localhost:3000" }];
     mockGetSites.mockResolvedValue(sites);
 
     const res = await GET();

@@ -1,30 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./caddyfileGen", () => ({ generateCaddyfile: vi.fn() }));
+vi.mock("~/lib/caddy/caddyfileGenerate", () => ({
+  generateCaddyfile: vi.fn(),
+}));
 vi.mock("fs/promises", () => ({
-  default: { writeFile: vi.fn() },
+  default: { mkdir: vi.fn(), writeFile: vi.fn() },
+  mkdir: vi.fn(),
   writeFile: vi.fn(),
 }));
-vi.mock("~/lib/caddy/caddySyncState", () => ({
+vi.mock("~/lib/data/siteService", () => ({
   markCaddyFailure: vi.fn(),
   markCaddyfileManagedWrite: vi.fn(),
   markCaddyPending: vi.fn(),
   markCaddySuccess: vi.fn(),
+  getCaddySyncStateSnapshot: vi.fn(async () => ({ pendingChanges: false })),
 }));
 vi.mock("~/lib/data/siteConfig", () => ({
   getSiteConfig: vi.fn(async () => ({ caddyApi: "http://localhost:2019" })),
 }));
+vi.mock("~/lib/config/runtimePaths", () => ({
+  getCaddyfilePath: vi.fn(() => "/app/Caddyfile"),
+}));
 
 import fs from "node:fs/promises";
-import { applyCaddyConfig } from "./caddyApi";
-import { generateCaddyfile } from "./caddyfileGen";
+import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
+import { syncCaddy } from "./caddySync";
 
 const mockGenerateCaddyfile = vi.mocked(generateCaddyfile);
 const mockWriteFile = vi.mocked(fs.writeFile);
 
 const GENERATED = "# Managed by default-site\n";
 
-describe("applyCaddyConfig", () => {
+describe("syncCaddy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGenerateCaddyfile.mockResolvedValue(GENERATED);
@@ -34,7 +41,7 @@ describe("applyCaddyConfig", () => {
   });
 
   it("writes the generated Caddyfile to CADDYFILE_PATH", async () => {
-    await applyCaddyConfig();
+    await syncCaddy();
 
     expect(mockWriteFile).toHaveBeenCalledOnce();
     const [path, content] = mockWriteFile.mock.calls[0];
@@ -43,7 +50,7 @@ describe("applyCaddyConfig", () => {
   });
 
   it("POSTs the generated Caddyfile to the Caddy admin API", async () => {
-    await applyCaddyConfig();
+    await syncCaddy();
 
     expect(fetch).toHaveBeenCalledOnce();
     const [url, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
@@ -60,10 +67,11 @@ describe("applyCaddyConfig", () => {
       text: async () => "internal error",
     } as unknown as Response);
 
-    const result = await applyCaddyConfig();
+    const result = await syncCaddy();
 
-    expect(result.ok).toBe(false);
+    expect(result.applied).toBe(false);
     expect(result.status).toBe(500);
     expect(result.error).toContain("Caddy API error: 500");
+    expect(typeof result.pendingChanges).toBe("boolean");
   });
 });

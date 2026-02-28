@@ -3,7 +3,7 @@ import OnboardingForm from "~/components/app/OnboardingForm";
 import {
   ensureOnboardingDraft,
   getOnboardingState,
-} from "~/lib/onboarding/onboarding";
+} from "~/lib/caddy/onboarding";
 
 export const dynamic = "force-dynamic";
 

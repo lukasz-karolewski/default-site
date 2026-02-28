@@ -22,32 +22,26 @@ vi.mock("~/lib/data/siteConfig", () => ({
   normalizeUpstream: vi.fn((v: string) => v.trim()),
 }));
 
-vi.mock("~/lib/caddy/caddyApi", () => ({
-  applyCaddyConfig: vi.fn(),
-}));
-
-vi.mock("~/lib/caddy/caddySyncScheduler", () => ({
-  ensureCaddyRetryLoop: vi.fn(),
+vi.mock("~/lib/caddy/caddySync", () => ({
+  syncCaddy: vi.fn(),
 }));
 
 import fs from "node:fs/promises";
-import { applyCaddyConfig } from "~/lib/caddy/caddyApi";
-import { ensureCaddyRetryLoop } from "~/lib/caddy/caddySyncScheduler";
+import { parseSitesFromCaddy } from "~/lib/caddy/caddyfileParser";
+import { syncCaddy } from "~/lib/caddy/caddySync";
 import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
 import { addSite, getSites } from "~/lib/data/siteService";
 import {
   ensureOnboardingDraft,
-  parseSitesFromCaddy,
   runStartupBootstrap,
-} from "./onboarding";
+} from "~/lib/caddy/onboarding";
 
 const mockReadFile = vi.mocked(fs.readFile);
 const mockGetSites = vi.mocked(getSites);
 const mockAddSite = vi.mocked(addSite);
 const mockGetSiteConfig = vi.mocked(getSiteConfig);
 const mockUpsertSiteConfig = vi.mocked(upsertSiteConfig);
-const mockApplyCaddyConfig = vi.mocked(applyCaddyConfig);
-const mockEnsureRetry = vi.mocked(ensureCaddyRetryLoop);
+const mockSyncCaddy = vi.mocked(syncCaddy);
 
 describe("parseSitesFromCaddy", () => {
   it("parses named matcher style sites", () => {
@@ -64,10 +58,12 @@ describe("onboarding bootstrap", () => {
     vi.clearAllMocks();
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
     mockGetSites.mockResolvedValue([]);
-    mockApplyCaddyConfig.mockResolvedValue({
-      ok: true,
+    mockSyncCaddy.mockResolvedValue({
+      applied: true,
+      attempted: true,
       error: null,
       status: 200,
+      pendingChanges: false,
     });
   });
 
@@ -92,7 +88,7 @@ describe("onboarding bootstrap", () => {
     await ensureOnboardingDraft();
 
     expect(mockAddSite).toHaveBeenCalledWith(
-      "ha.example.com",
+      "ha",
       "localhost:8123",
     );
   });
@@ -109,7 +105,6 @@ describe("onboarding bootstrap", () => {
 
     await runStartupBootstrap();
 
-    expect(mockApplyCaddyConfig).toHaveBeenCalledOnce();
-    expect(mockEnsureRetry).toHaveBeenCalledOnce();
+    expect(mockSyncCaddy).toHaveBeenCalledOnce();
   });
 });

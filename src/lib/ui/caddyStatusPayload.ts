@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
-import { getCaddyfilePath } from "~/lib/config/runtimePaths";
-import { getCaddySyncSnapshot } from "./caddySyncState";
+import { sha256 } from "~/lib/shared/hash";
+import { getCaddyfilePath } from "~/lib/shared/paths";
+import { getCaddySyncSnapshot } from "~/lib/ui/caddySyncState";
 
 interface CaddyfileSnapshot {
   path: string;
@@ -16,10 +16,6 @@ interface CaddyfileSnapshot {
 export interface CaddyStatusPayload
   extends Awaited<ReturnType<typeof getCaddySyncSnapshot>> {
   caddyfile: CaddyfileSnapshot;
-}
-
-function sha256(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
 }
 
 export async function buildCaddyStatusPayload(): Promise<CaddyStatusPayload> {
