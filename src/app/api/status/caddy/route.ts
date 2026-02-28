@@ -4,5 +4,5 @@ import { buildCaddyStatusPayload } from "~/lib/caddy/caddyStatusPayload";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-	return NextResponse.json(await buildCaddyStatusPayload());
+  return NextResponse.json(await buildCaddyStatusPayload());
 }
