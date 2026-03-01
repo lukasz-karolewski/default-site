@@ -1,13 +1,6 @@
 import { parse } from "node-html-parser";
-
-/**
- * Normalize an upstream value (e.g. "localhost:3000") into a full URL.
- */
-function normalizeUpstreamUrl(upstream: string): string {
-  const trimmed = upstream.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `http://${trimmed}`;
-}
+import type { ProbeTarget, SiteProbeOptions } from "./siteProbeTargets";
+import { buildSiteProbeTargets } from "./siteProbeTargets";
 
 /**
  * Extract the best favicon URL from an HTML string.
@@ -41,23 +34,25 @@ export function extractFaviconFromHtml(
  *
  * Returns the absolute favicon URL, or `null` if none found.
  */
-export async function detectFavicon(upstream: string): Promise<string | null> {
-  const baseUrl = normalizeUpstreamUrl(upstream);
-
+export async function detectFavicon(
+  upstream: string,
+  options?: SiteProbeOptions,
+): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
+  const targets = buildSiteProbeTargets({ upstream, ...options });
 
   try {
-    const res = await fetch(baseUrl, {
-      signal: controller.signal,
-      headers: { "User-Agent": "default-site-favicon-detect/1.0" },
-      redirect: "follow",
-    });
+    for (const target of targets) {
+      try {
+        const favicon = await detectFromTarget(target, controller.signal);
+        if (favicon) return favicon;
+      } catch {
+        // try next target
+      }
+    }
 
-    if (!res.ok) return null;
-
-    const html = await res.text();
-    return extractFaviconFromHtml(html, baseUrl);
+    return null;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       console.warn(`Favicon detection timed out for ${upstream}`);
@@ -72,4 +67,24 @@ export async function detectFavicon(upstream: string): Promise<string | null> {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function detectFromTarget(
+  target: ProbeTarget,
+  signal: AbortSignal,
+): Promise<string | null> {
+  const res = await fetch(target.url, {
+    signal,
+    headers: {
+      "User-Agent": "default-site-favicon-detect/1.0",
+      ...(target.headers ?? {}),
+    },
+    redirect: "follow",
+  });
+
+  if (!res.ok) return null;
+  if (!res.headers.get("content-type")?.includes("text/html")) return null;
+
+  const html = await res.text();
+  return extractFaviconFromHtml(html, target.canonicalUrl ?? target.url);
 }

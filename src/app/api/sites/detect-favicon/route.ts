@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { getSiteConfig } from "~/lib/data/siteConfig";
 import { detectFavicon } from "~/lib/ui/faviconDetect";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const upstream = searchParams.get("upstream");
+  const subdomain = searchParams.get("subdomain");
 
   if (!upstream) {
     return NextResponse.json(
@@ -12,6 +14,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const favicon = await detectFavicon(upstream);
+  const config = await getSiteConfig();
+  const favicon = await detectFavicon(upstream, {
+    subdomain,
+    baseDomain: config?.baseDomain,
+  });
   return NextResponse.json({ favicon });
 }

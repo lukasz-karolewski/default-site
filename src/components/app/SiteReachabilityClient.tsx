@@ -32,7 +32,10 @@ export default function SiteReachabilityClient({
       const entries = await Promise.all(
         sites.map(async (site) => {
           try {
-            const query = new URLSearchParams({ upstream: site.upstream });
+            const query = new URLSearchParams({
+              upstream: site.upstream,
+              subdomain: site.subdomain,
+            });
             const response = await fetch(`/api/sites/reachability?${query}`, {
               cache: "no-store",
             });

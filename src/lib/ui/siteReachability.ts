@@ -1,15 +1,13 @@
-const AGGRESSIVE_TIMEOUT_MS = 1200;
+import type { SiteProbeOptions } from "./siteProbeTargets";
+import { buildSiteProbeTargets } from "./siteProbeTargets";
 
-function normalizeUpstreamUrl(upstream: string): string {
-  const trimmed = upstream.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `http://${trimmed}`;
-}
+const AGGRESSIVE_TIMEOUT_MS = 1200;
 
 async function probe(
   url: string,
   method: "HEAD" | "GET",
   timeoutMs: number,
+  requestInit?: Pick<RequestInit, "headers">,
 ): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -20,6 +18,7 @@ async function probe(
       cache: "no-store",
       redirect: "follow",
       signal: controller.signal,
+      ...requestInit,
     });
   } finally {
     clearTimeout(timeout);
@@ -28,19 +27,27 @@ async function probe(
 
 export async function checkSiteReachability(
   upstream: string,
+  options?: SiteProbeOptions,
   timeoutMs = AGGRESSIVE_TIMEOUT_MS,
 ): Promise<boolean> {
-  const url = normalizeUpstreamUrl(upstream);
+  const targets = buildSiteProbeTargets({ upstream, ...options });
 
-  try {
-    const headResponse = await probe(url, "HEAD", timeoutMs);
-    if (headResponse.status === 405 || headResponse.status === 501) {
-      const getResponse = await probe(url, "GET", timeoutMs);
-      return getResponse.status < 500;
-    }
+  for (const target of targets) {
+    try {
+      const headResponse = await probe(target.url, "HEAD", timeoutMs, {
+        headers: target.headers,
+      });
+      if (headResponse.status === 405 || headResponse.status === 501) {
+        const getResponse = await probe(target.url, "GET", timeoutMs, {
+          headers: target.headers,
+        });
+        if (getResponse.status < 500) return true;
+        continue;
+      }
 
-    return headResponse.status < 500;
-  } catch {
-    return false;
+      if (headResponse.status < 500) return true;
+    } catch {}
   }
+
+  return false;
 }

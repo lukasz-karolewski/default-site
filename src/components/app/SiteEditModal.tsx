@@ -64,6 +64,7 @@ export default function SiteEditModal({
   const [detectedFavicon, setDetectedFavicon] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
+  const subdomainRef = useRef<HTMLInputElement>(null);
   const upstreamRef = useRef<HTMLInputElement>(null);
 
   const title = mode === "add" ? "Add site" : "Edit site";
@@ -102,9 +103,9 @@ export default function SiteEditModal({
     setDetectError(null);
 
     try {
-      const res = await fetch(
-        `/api/sites/detect-favicon?upstream=${encodeURIComponent(upstream)}`,
-      );
+      const subdomain = subdomainRef.current?.value?.trim() ?? "";
+      const query = new URLSearchParams({ upstream, subdomain });
+      const res = await fetch(`/api/sites/detect-favicon?${query.toString()}`);
       const data = await res.json();
 
       if (data.favicon) {
@@ -147,6 +148,7 @@ export default function SiteEditModal({
           <div className="grid gap-1.5">
             <Label htmlFor="subdomain">Subdomain</Label>
             <Input
+              ref={subdomainRef}
               id="subdomain"
               name="subdomain"
               placeholder="app"
