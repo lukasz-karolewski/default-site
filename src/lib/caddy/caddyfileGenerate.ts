@@ -1,9 +1,11 @@
 import fs from "node:fs/promises";
 import { extractGlobalOptionsBlock } from "~/lib/caddy/caddyfileParser";
-import { CADDY_ADMIN_ALLOWED_ORIGINS } from "~/lib/caddy/caddyUrls";
+
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
 import { getCaddyfilePath } from "~/lib/shared/paths";
+
+export const CADDY_ADMIN_ALLOWED_ORIGINS = ["localhost:2019", "127.0.0.1:2019"];
 
 const REQUIRED_ADMIN_BLOCK = `\tadmin 0.0.0.0:2019 {
 \t\torigins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}
@@ -26,7 +28,10 @@ function buildManagedSiteBlock(input: ManagedBlockInput): string {
   });
 
   const inner = [
-    ...siteBlockDirectives.split("\n").filter((line) => line.trim()).map((line) => `\t${line}`),
+    ...siteBlockDirectives
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => `\t${line}`),
     ...siteBlocks,
     `\thandle {\n\t\treverse_proxy ${dashboardUpstream}\n\t}`,
   ].join("\n\n");

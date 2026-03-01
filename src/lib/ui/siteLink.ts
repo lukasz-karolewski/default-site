@@ -1,4 +1,4 @@
-import { SITE_URL_PROTOCOL } from "~/lib/caddy/caddyUrls";
+const SITE_URL_PROTOCOL = "https://";
 
 export function buildSiteUrl(host: string, rootDomain: string): string {
   const value = host

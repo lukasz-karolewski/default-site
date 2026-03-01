@@ -1,15 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { generateCaddyfile } from "~/lib/caddy/caddyfileGenerate";
+import { buildCaddyUrl } from "~/lib/caddy/caddyUrls";
+import { getSiteConfig } from "~/lib/data/siteConfig";
 import {
+  getCaddySyncStateSnapshot,
   markCaddyFailure,
   markCaddyfileManagedWrite,
   markCaddyPending,
   markCaddySuccess,
-  getCaddySyncStateSnapshot,
 } from "~/lib/data/siteService";
-import { buildCaddyUrl, CADDY_LOAD_PATH } from "~/lib/caddy/caddyUrls";
-import { getSiteConfig } from "~/lib/data/siteConfig";
 import { sha256 } from "~/lib/shared/hash";
 import { getCaddyfilePath } from "~/lib/shared/paths";
 
@@ -26,6 +26,7 @@ export interface CaddySyncResult {
   status: number | null;
   pendingChanges: boolean;
 }
+export const CADDY_LOAD_PATH = "/load";
 
 async function pushConfigToCaddyApi(
   caddyfile: string,
@@ -99,5 +100,5 @@ export async function syncCaddy(): Promise<CaddySyncResult> {
       status: null,
       pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
     };
-  };
+  }
 }
