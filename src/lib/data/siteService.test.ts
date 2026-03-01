@@ -21,6 +21,7 @@ describe("siteService", () => {
       expect(sites[0]).toMatchObject({
         subdomain: "example",
         upstream: "localhost:3000",
+        favicon: null,
       });
       expect(sites[0].id).toBeTypeOf("string");
     });
@@ -30,6 +31,16 @@ describe("siteService", () => {
       await addSite("b", "localhost:3002");
       const sites = await getSites();
       expect(sites[0].id).not.toBe(sites[1].id);
+    });
+
+    it("stores a favicon when provided", async () => {
+      await addSite(
+        "withicon",
+        "localhost:4000",
+        "http://localhost:4000/icon.png",
+      );
+      const sites = await getSites();
+      expect(sites[0].favicon).toBe("http://localhost:4000/icon.png");
     });
   });
 
@@ -70,6 +81,27 @@ describe("siteService", () => {
         subdomain: "new",
         upstream: "localhost:2000",
       });
+    });
+
+    it("updates favicon for the given id", async () => {
+      await addSite("fav", "localhost:1000");
+      const [site] = await getSites();
+      await updateSite(
+        site.id,
+        "fav",
+        "localhost:1000",
+        "http://localhost:1000/new-icon.png",
+      );
+      const updated = await getSites();
+      expect(updated[0].favicon).toBe("http://localhost:1000/new-icon.png");
+    });
+
+    it("clears favicon when set to null", async () => {
+      await addSite("fav", "localhost:1000", "http://localhost:1000/icon.png");
+      const [site] = await getSites();
+      await updateSite(site.id, "fav", "localhost:1000", null);
+      const updated = await getSites();
+      expect(updated[0].favicon).toBeNull();
     });
 
     it("does not affect other sites", async () => {

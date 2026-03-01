@@ -3,16 +3,11 @@
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { buildFaviconUrl } from "~/lib/ui/favicon";
-import { buildSiteUrl } from "~/lib/ui/siteLink";
+import type { SiteRecord } from "~/lib/data/schema";
+import { generateAvatarSvg } from "~/lib/ui/avatarGradient";
 import { NoticeProvider, NoticeViewport } from "~/lib/ui/noticeContext";
+import { buildSiteUrl } from "~/lib/ui/siteLink";
 import SiteEditModal from "./SiteEditModal";
-
-interface SiteRecord {
-  id: string;
-  subdomain: string;
-  upstream: string;
-}
 
 interface SiteGridClientProps {
   sites: SiteRecord[];
@@ -35,7 +30,9 @@ export default function SiteGridClient({
   const sortedSites = useMemo(
     () =>
       [...sites].sort((a, b) =>
-        a.subdomain.localeCompare(b.subdomain, undefined, { sensitivity: "base" }),
+        a.subdomain.localeCompare(b.subdomain, undefined, {
+          sensitivity: "base",
+        }),
       ),
     [sites],
   );
@@ -87,7 +84,7 @@ export default function SiteGridClient({
       <section className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
         {sortedSites.map((site) => {
           const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
-          const faviconUrl = buildFaviconUrl(siteUrl);
+          const faviconSrc = site.favicon || generateAvatarSvg(site.subdomain);
           const tileClasses =
             "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
 
@@ -103,14 +100,11 @@ export default function SiteGridClient({
               >
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <img
-                    src={faviconUrl}
+                    src={faviconSrc}
                     alt=""
                     aria-hidden="true"
                     className="mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
                     loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
                   />
                   <p className="text-lg font-bold text-foreground transition-transform duration-200 group-hover:-translate-y-1.5 sm:text-xl">
                     {site.subdomain}
@@ -128,14 +122,11 @@ export default function SiteGridClient({
               <div className="relative flex h-full items-center justify-center">
                 <div className="text-center">
                   <img
-                    src={faviconUrl}
+                    src={faviconSrc}
                     alt=""
                     aria-hidden="true"
                     className="mx-auto mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
                     loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
                   />
                   <p className="text-lg font-bold text-foreground sm:text-xl">
                     {site.subdomain}

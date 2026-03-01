@@ -1,18 +1,13 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
+import type { SiteConfigInput } from "./schema";
 import { siteConfig } from "./schema";
+
+export type { SiteConfigInput };
 
 const SITE_CONFIG_ID = "singleton";
 
 export type OnboardingStatus = "pending" | "completed";
-
-export interface SiteConfigInput {
-  baseDomain: string;
-  caddyApi: string;
-  dashboardUpstream: string;
-  siteBlockDirectives: string;
-  onboardingStatus: OnboardingStatus;
-}
 
 export async function getSiteConfig() {
   return getDb()

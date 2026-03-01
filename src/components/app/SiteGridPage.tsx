@@ -1,11 +1,8 @@
+import type { SiteRecord } from "~/lib/data/schema";
 import FooterStatus from "./FooterStatus";
 import SiteGridClient from "./SiteGridClient";
 
-export interface SiteRecord {
-  id: string;
-  subdomain: string;
-  upstream: string;
-}
+export type { SiteRecord };
 
 interface SiteGridPageProps {
   sites: SiteRecord[];

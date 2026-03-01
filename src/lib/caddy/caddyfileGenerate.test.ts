@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { extractGlobalOptionsBlock } from "./caddyfileParser";
 import { generateCaddyfile } from "./caddyfileGenerate";
+import { extractGlobalOptionsBlock } from "./caddyfileParser";
 
 vi.mock("~/lib/data/siteService", () => ({
   getSites: vi.fn(),

@@ -43,6 +43,13 @@
 			"when": 1772200000000,
 			"tag": "0005_sites_host_to_subdomain",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1772300000000,
+			"tag": "0006_sites_favicon",
+			"breakpoints": true
 		}
 	]
 }

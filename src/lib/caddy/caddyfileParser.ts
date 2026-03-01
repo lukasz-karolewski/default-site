@@ -13,8 +13,7 @@ export interface ParsedSite {
   upstream: string;
 }
 
-const WILDCARD_HEADER =
-  /\*\.([A-Za-z0-9.-]+)\s*,\s*([A-Za-z0-9.-]+)\s*\{/;
+const WILDCARD_HEADER = /\*\.([A-Za-z0-9.-]+)\s*,\s*([A-Za-z0-9.-]+)\s*\{/;
 
 export function parseSitesFromCaddy(content: string): ParsedSite[] {
   const results: ParsedSite[] = [];

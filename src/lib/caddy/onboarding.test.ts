@@ -29,12 +29,12 @@ vi.mock("~/lib/caddy/caddySync", () => ({
 import fs from "node:fs/promises";
 import { parseSitesFromCaddy } from "~/lib/caddy/caddyfileParser";
 import { syncCaddy } from "~/lib/caddy/caddySync";
-import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
-import { addSite, getSites } from "~/lib/data/siteService";
 import {
   ensureOnboardingDraft,
   runStartupBootstrap,
 } from "~/lib/caddy/onboarding";
+import { getSiteConfig, upsertSiteConfig } from "~/lib/data/siteConfig";
+import { addSite, getSites } from "~/lib/data/siteService";
 
 const mockReadFile = vi.mocked(fs.readFile);
 const mockGetSites = vi.mocked(getSites);
@@ -87,10 +87,7 @@ describe("onboarding bootstrap", () => {
 
     await ensureOnboardingDraft();
 
-    expect(mockAddSite).toHaveBeenCalledWith(
-      "ha",
-      "localhost:8123",
-    );
+    expect(mockAddSite).toHaveBeenCalledWith("ha", "localhost:8123");
   });
 
   it("applies config on startup when onboarding is completed", async () => {

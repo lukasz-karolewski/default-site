@@ -1,6 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { GlobeIcon, Loader2Icon, XIcon } from "lucide-react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,20 +18,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import {
   deleteSiteAction,
   type SiteActionState,
   saveSiteAction,
 } from "~/lib/actions/siteActions";
+import type { SiteRecord } from "~/lib/data/schema";
+import { generateAvatarSvg } from "~/lib/ui/avatarGradient";
 import { useNotice } from "~/lib/ui/noticeContext";
-
-interface SiteRecord {
-  id: string;
-  subdomain: string;
-  upstream: string;
-}
 
 interface SiteEditModalProps {
   open: boolean;
@@ -51,11 +61,23 @@ export default function SiteEditModal({
     initialState,
   );
 
+  const [detectedFavicon, setDetectedFavicon] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const upstreamRef = useRef<HTMLInputElement>(null);
+
   const title = mode === "add" ? "Add site" : "Edit site";
   const description =
     mode === "add"
       ? "Create a new subdomain route."
       : "Update subdomain and redirect target.";
+
+  // Reset favicon state when site prop changes (e.g. opening a different site)
+  useEffect(() => {
+    setDetectedFavicon(site?.favicon ?? null);
+    setDetectError(null);
+    setDetecting(false);
+  }, [site?.favicon]);
 
   useEffect(() => {
     if (!saveState.message) return;
@@ -68,6 +90,42 @@ export default function SiteEditModal({
     notify(deleteState.message);
     if (deleteState.ok) onOpenChange(false);
   }, [deleteState, notify, onOpenChange]);
+
+  const handleDetectFavicon = useCallback(async () => {
+    const upstream = upstreamRef.current?.value?.trim();
+    if (!upstream) {
+      setDetectError("Enter a redirect address first.");
+      return;
+    }
+
+    setDetecting(true);
+    setDetectError(null);
+
+    try {
+      const res = await fetch(
+        `/api/sites/detect-favicon?upstream=${encodeURIComponent(upstream)}`,
+      );
+      const data = await res.json();
+
+      if (data.favicon) {
+        setDetectedFavicon(data.favicon);
+        setDetectError(null);
+      } else {
+        setDetectedFavicon(null);
+        setDetectError("No favicon found at this address.");
+      }
+    } catch {
+      setDetectError("Failed to connect.");
+      setDetectedFavicon(null);
+    } finally {
+      setDetecting(false);
+    }
+  }, []);
+
+  // Preview src: detected favicon, existing site favicon, or generated avatar
+  const subdomainForAvatar =
+    site?.subdomain || upstreamRef.current?.value || "?";
+  const previewSrc = detectedFavicon || generateAvatarSvg(subdomainForAvatar);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -84,6 +142,7 @@ export default function SiteEditModal({
           className="grid gap-3"
         >
           <input type="hidden" name="id" value={site?.id ?? ""} />
+          <input type="hidden" name="favicon" value={detectedFavicon ?? ""} />
 
           <div className="grid gap-1.5">
             <Label htmlFor="subdomain">Subdomain</Label>
@@ -98,13 +157,66 @@ export default function SiteEditModal({
 
           <div className="grid gap-1.5">
             <Label htmlFor="upstream">Redirect address</Label>
-            <Input
-              id="upstream"
-              name="upstream"
-              placeholder="localhost:3000"
-              defaultValue={site?.upstream ?? ""}
-              required
-            />
+            <InputGroup>
+              <InputGroupInput
+                ref={upstreamRef}
+                id="upstream"
+                name="upstream"
+                placeholder="localhost:3000"
+                defaultValue={site?.upstream ?? ""}
+                required
+              />
+              <InputGroupAddon align="inline-end" className="pr-0">
+                <InputGroupButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDetectFavicon}
+                  disabled={detecting}
+                  className="h-8 rounded-none border-0 border-l border-input px-2.5"
+                  title="Detect favicon"
+                >
+                  {detecting ? (
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                  ) : (
+                    <GlobeIcon className="size-3.5" />
+                  )}
+                  Test
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Favicon</Label>
+            <div className="flex items-center gap-3">
+              <img
+                src={previewSrc}
+                alt=""
+                aria-hidden="true"
+                className="h-8 w-8 rounded object-contain"
+              />
+              {detectedFavicon ? (
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="truncate text-xs text-muted-foreground">
+                    {detectedFavicon}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setDetectedFavicon(null)}
+                    aria-label="Clear favicon"
+                  >
+                    <XIcon className="size-3" />
+                  </Button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {detectError ?? "Auto-generated avatar. Hit Test to detect."}
+                </span>
+              )}
+            </div>
           </div>
         </form>
 
@@ -114,34 +226,27 @@ export default function SiteEditModal({
           </form>
         ) : null}
 
-        <AlertDialogFooter className="mt-2 flex-row justify-between gap-2">
+        <AlertDialogFooter className="mt-2 !flex !flex-row items-center justify-end gap-2 group-data-[size=sm]/alert-dialog-content:!flex group-data-[size=sm]/alert-dialog-content:!grid-cols-none">
           {mode === "edit" && site ? (
             <AlertDialogAction
               variant="destructive"
               type="submit"
               form="site-delete-form"
-              className="h-8 px-3"
               disabled={deletePending || savePending}
+              className="mr-auto"
             >
               {deletePending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
-          ) : (
-            <span />
-          )}
+          ) : null}
 
-          <div className="flex gap-2">
-            <AlertDialogCancel type="button" className="h-8 px-3">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              type="submit"
-              form="site-save-form"
-              className="h-8 px-3"
-              disabled={savePending || deletePending}
-            >
-              {savePending ? "Saving..." : mode === "add" ? "Add" : "Save"}
-            </AlertDialogAction>
-          </div>
+          <AlertDialogAction
+            type="submit"
+            form="site-save-form"
+            disabled={savePending || deletePending}
+          >
+            {savePending ? "Saving..." : mode === "add" ? "Add" : "Save"}
+          </AlertDialogAction>
+          <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

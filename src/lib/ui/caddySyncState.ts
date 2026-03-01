@@ -1,8 +1,6 @@
-import {
-  getCaddySyncStateSnapshot,
-  type CaddySyncStateSnapshot,
-} from "~/lib/data/siteService";
+import type { CaddySyncStateSnapshot } from "~/lib/data/schema";
 import { getSiteConfig } from "~/lib/data/siteConfig";
+import { getCaddySyncStateSnapshot } from "~/lib/data/siteService";
 
 export interface CaddySyncSnapshot extends CaddySyncStateSnapshot {
   caddyApiUrl: string;

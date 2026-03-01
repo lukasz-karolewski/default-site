@@ -21,8 +21,11 @@ function toNotice(
 
 async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
   const id = (formData.get("id")?.toString() ?? "").trim();
-  const subdomain = (formData.get("subdomain")?.toString() ?? "").trim().toLowerCase();
+  const subdomain = (formData.get("subdomain")?.toString() ?? "")
+    .trim()
+    .toLowerCase();
   const upstream = (formData.get("upstream")?.toString() ?? "").trim();
+  const favicon = (formData.get("favicon")?.toString() ?? "").trim() || null;
 
   if (!subdomain || !upstream) {
     return { ok: false, message: "Subdomain and upstream are required." };
@@ -37,9 +40,9 @@ async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
 
   try {
     if (id) {
-      await updateSite(id, subdomain, upstream);
+      await updateSite(id, subdomain, upstream, favicon);
     } else {
-      await addSite(subdomain, upstream);
+      await addSite(subdomain, upstream, favicon);
     }
 
     const sync = await syncCaddy();

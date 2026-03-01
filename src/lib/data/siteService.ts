@@ -1,19 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
+import type { CaddySyncStateSnapshot } from "./schema";
 import { caddySyncState, sites } from "./schema";
 
-const CADDY_SYNC_STATE_ID = "singleton";
+export type { CaddySyncStateSnapshot };
 
-export interface CaddySyncStateSnapshot {
-  connected: boolean;
-  lastError: string | null;
-  lastAttemptAt: string | null;
-  lastSuccessAt: string | null;
-  pendingChanges: boolean;
-  lastManagedWriteAt: string | null;
-  lastManagedWriteHash: string | null;
-}
+const CADDY_SYNC_STATE_ID = "singleton";
 
 type MutableCaddySyncStateFields = Partial<
   Pick<
@@ -62,10 +55,14 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-export async function addSite(subdomain: string, upstream: string) {
+export async function addSite(
+  subdomain: string,
+  upstream: string,
+  favicon?: string | null,
+) {
   return getDb()
     .insert(sites)
-    .values({ id: randomUUID(), subdomain, upstream })
+    .values({ id: randomUUID(), subdomain, upstream, favicon: favicon ?? null })
     .run();
 }
 
@@ -77,10 +74,15 @@ export async function removeSite(id: string) {
   return getDb().delete(sites).where(eq(sites.id, id)).run();
 }
 
-export async function updateSite(id: string, subdomain: string, upstream: string) {
+export async function updateSite(
+  id: string,
+  subdomain: string,
+  upstream: string,
+  favicon?: string | null,
+) {
   return getDb()
     .update(sites)
-    .set({ subdomain, upstream })
+    .set({ subdomain, upstream, favicon: favicon ?? null })
     .where(eq(sites.id, id))
     .run();
 }

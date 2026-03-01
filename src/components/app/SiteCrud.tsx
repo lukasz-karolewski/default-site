@@ -1,15 +1,10 @@
+import type { SiteRecord } from "~/lib/data/schema";
 import CaddyStatusPanel from "./CaddyStatusPanel";
 import ManageSitesPanel from "./ManageSitesPanel";
 import PublishedSitesPanel from "./PublishedSitesPanel";
 
-interface Site {
-  id: string;
-  subdomain: string;
-  upstream: string;
-}
-
 interface SiteCrudProps {
-  sites: Site[];
+  sites: SiteRecord[];
   baseDomain: string;
   editSiteId?: string;
   notice?: string;

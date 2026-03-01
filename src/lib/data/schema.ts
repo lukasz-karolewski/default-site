@@ -4,7 +4,10 @@ export const sites = sqliteTable("sites", {
   id: text("id").primaryKey(),
   subdomain: text("subdomain").notNull(),
   upstream: text("upstream").notNull(),
+  favicon: text("favicon"),
 });
+
+export type SiteRecord = typeof sites.$inferSelect;
 
 export const caddySyncState = sqliteTable("caddy_sync_state", {
   id: text("id").primaryKey(),
@@ -19,6 +22,11 @@ export const caddySyncState = sqliteTable("caddy_sync_state", {
   lastManagedWriteHash: text("last_managed_write_hash"),
 });
 
+export type CaddySyncStateSnapshot = Omit<
+  typeof caddySyncState.$inferSelect,
+  "id"
+>;
+
 export const siteConfig = sqliteTable("site_config", {
   id: text("id").primaryKey(),
   baseDomain: text("base_domain").notNull(),
@@ -29,3 +37,6 @@ export const siteConfig = sqliteTable("site_config", {
     enum: ["pending", "completed"],
   }).notNull(),
 });
+
+export type SiteConfigRecord = typeof siteConfig.$inferSelect;
+export type SiteConfigInput = Omit<typeof siteConfig.$inferInsert, "id">;
