@@ -50,12 +50,12 @@ export default function FooterStatus() {
     status,
     writing,
     showDiagnostics,
-    healthy,
-    summary,
     fetchStatus,
     writeConfigNow,
     setShowDiagnostics,
   } = useCaddyStatus();
+
+  const healthy = status.connected && !status.pendingChanges;
 
   const configEndpoint = status.caddyApiUrl
     ? buildCaddyUrl(status.caddyApiUrl, CADDY_CONFIG_PATH)
@@ -125,8 +125,7 @@ export default function FooterStatus() {
     <footer className="mt-auto border-t border-border pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <p aria-live="polite">
-          Status: {summary} · Pending changes:{" "}
-          {status.pendingChanges ? "yes" : "no"}
+          Pending changes: {status.pendingChanges ? "yes" : "no"}
         </p>
         <div className="flex items-center gap-2">
           {showDiagnostics ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface CaddyStatus {
   connected: boolean;
@@ -69,15 +69,6 @@ export function useCaddyStatus() {
 
   const healthy = status.connected && !status.pendingChanges;
 
-  const summary = useMemo(() => {
-    if (healthy) {
-      return `Connected · last sync ${formatTimestamp(status.lastSuccessAt)}`;
-    }
-
-    const failedAt = status.lastAttemptAt ?? status.lastSuccessAt;
-    return `Degraded · last attempt ${formatTimestamp(failedAt)}`;
-  }, [healthy, status.lastAttemptAt, status.lastSuccessAt]);
-
   const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/status/caddy", { cache: "no-store" });
@@ -120,8 +111,6 @@ export function useCaddyStatus() {
     status,
     writing,
     showDiagnostics,
-    healthy,
-    summary,
     fetchStatus,
     writeConfigNow,
     setShowDiagnostics,
