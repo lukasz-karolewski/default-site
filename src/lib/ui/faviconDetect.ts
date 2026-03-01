@@ -75,7 +75,6 @@ async function detectFromTarget(
     redirect: "follow",
   });
 
-  if (!res.ok) return null;
   if (!res.headers.get("content-type")?.includes("text/html")) return null;
 
   const html = await res.text();
