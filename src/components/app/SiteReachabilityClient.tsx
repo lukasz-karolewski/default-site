@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import type { SiteRecord } from "~/lib/data/schema";
 
 interface SiteReachabilityClientProps {
-  sites: SiteRecord[];
-  children: (onlineBySiteId: Record<string, boolean>) => React.ReactNode;
+  site: SiteRecord;
+  children: (isOnline: boolean | undefined) => React.ReactNode;
 }
 
 interface ReachabilityResponse {
@@ -13,54 +13,42 @@ interface ReachabilityResponse {
 }
 
 export default function SiteReachabilityClient({
-  sites,
+  site,
   children,
 }: SiteReachabilityClientProps) {
-  const [onlineBySiteId, setOnlineBySiteId] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [isOnline, setIsOnline] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
 
-    if (!sites.length) {
-      setOnlineBySiteId({});
-      return;
-    }
+    setIsOnline(undefined);
 
-    async function fetchReachability() {
-      const entries = await Promise.all(
-        sites.map(async (site) => {
-          try {
-            const query = new URLSearchParams({
-              upstream: site.upstream,
-              subdomain: site.subdomain,
-            });
-            const response = await fetch(`/api/sites/reachability?${query}`, {
-              cache: "no-store",
-            });
+    void (async () => {
+      let nextOnline = false;
 
-            if (!response.ok) return [site.id, false] as const;
+      try {
+        const query = new URLSearchParams({
+          upstream: site.upstream,
+          subdomain: site.subdomain,
+        });
+        const response = await fetch(`/api/sites/reachability?${query}`, {
+          cache: "no-store",
+        });
 
-            const payload = (await response.json()) as ReachabilityResponse;
-            return [site.id, payload.online === true] as const;
-          } catch {
-            return [site.id, false] as const;
-          }
-        }),
-      );
+        if (response.ok) {
+          const payload = (await response.json()) as ReachabilityResponse;
+          nextOnline = payload.online === true;
+        }
+      } catch {}
 
       if (!active) return;
-
-      setOnlineBySiteId(Object.fromEntries(entries));
-    }
-
-    void fetchReachability();
+      setIsOnline(nextOnline);
+    })();
 
     return () => {
       active = false;
     };
-  }, [sites]);
+  }, [site.subdomain, site.upstream]);
 
-  return <>{children(onlineBySiteId)}</>;
+  return <>{children(isOnline)}</>;
 }

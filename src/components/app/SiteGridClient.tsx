@@ -63,10 +63,6 @@ export default function SiteGridClient({
       sites: group,
     }));
   }, [sites]);
-  const orderedSites = useMemo(
-    () => groupedSites.flatMap((group) => group.sites),
-    [groupedSites],
-  );
 
   function openAddModal() {
     setModalMode("add");
@@ -111,123 +107,124 @@ export default function SiteGridClient({
       </section>
 
       <NoticeViewport />
+      <section className="mt-6 space-y-6">
+        {groupedSites.length === 0 ? (
+          <div className="border border-dashed border-border bg-background px-4 py-8 text-xs text-muted-foreground">
+            No sites configured.
+          </div>
+        ) : null}
 
-      <SiteReachabilityClient sites={orderedSites}>
-        {(onlineBySiteId) => (
-          <section className="mt-6 space-y-6">
-            {groupedSites.length === 0 ? (
-              <div className="border border-dashed border-border bg-background px-4 py-8 text-xs text-muted-foreground">
-                No sites configured.
-              </div>
-            ) : null}
+        {groupedSites.map((group) => (
+          <section key={group.redirectHost} className="space-y-2">
+            <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              {group.redirectHost}
+            </h2>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {group.sites.map((site) => {
+                const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
+                const faviconSrc =
+                  site.favicon || generateAvatarSvg(site.subdomain);
+                const tileClasses =
+                  "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
 
-            {groupedSites.map((group) => (
-              <section key={group.redirectHost} className="space-y-2">
-                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                  {group.redirectHost}
-                </h2>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
-                  {group.sites.map((site) => {
-                    const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
-                    const faviconSrc =
-                      site.favicon || generateAvatarSvg(site.subdomain);
-                    const tileClasses =
-                      "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
-                    const isOffline = onlineBySiteId[site.id] === false;
+                if (!isEditMode) {
+                  return (
+                    <SiteReachabilityClient key={site.id} site={site}>
+                      {(isOnline) => {
+                        const isOffline = isOnline === false;
 
-                    if (!isEditMode) {
-                      return (
-                        <a
-                          key={site.id}
-                          href={siteUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            tileClasses,
-                            isOffline &&
-                              "opacity-45 saturate-0 hover:bg-background",
-                          )}
-                          aria-label={
-                            isOffline
-                              ? `${site.subdomain} is offline`
-                              : `Open ${site.subdomain}`
-                          }
-                        >
-                          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                            <img
-                              src={faviconSrc}
-                              alt=""
-                              aria-hidden="true"
-                              className={cn(
-                                "mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7",
-                                isOffline
-                                  ? "opacity-85"
-                                  : "transition-transform duration-200 group-hover:-translate-y-1.5",
-                              )}
-                              loading="lazy"
-                            />
-                            <p
-                              className={cn(
-                                "text-lg font-bold sm:text-xl",
-                                isOffline
-                                  ? "text-muted-foreground"
-                                  : "text-foreground transition-transform duration-200 group-hover:-translate-y-1.5",
-                              )}
-                            >
-                              {site.subdomain}
-                            </p>
-                            <p
-                              className={cn(
-                                "mt-1 text-xs text-muted-foreground",
-                                isOffline
-                                  ? "opacity-100"
-                                  : "opacity-0 translate-y-1 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100",
-                              )}
-                            >
-                              {isOffline ? "Offline" : site.upstream}
-                            </p>
-                          </div>
-                        </a>
-                      );
-                    }
-
-                    return (
-                      <article key={site.id} className={tileClasses}>
-                        <div className="relative flex h-full items-center justify-center">
-                          <div className="text-center">
-                            <img
-                              src={faviconSrc}
-                              alt=""
-                              aria-hidden="true"
-                              className="mx-auto mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
-                              loading="lazy"
-                            />
-                            <p className="text-lg font-bold text-foreground sm:text-xl">
-                              {site.subdomain}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground opacity-80">
-                              {site.upstream}
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="xs"
-                            onClick={() => openEditModal(site.id)}
-                            className="absolute right-0 top-0"
+                        return (
+                          <a
+                            href={siteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              tileClasses,
+                              isOffline &&
+                                "opacity-45 saturate-0 hover:bg-background",
+                            )}
+                            aria-label={
+                              isOffline
+                                ? `${site.subdomain} is offline`
+                                : `Open ${site.subdomain}`
+                            }
                           >
-                            Edit
-                          </Button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                              <img
+                                src={faviconSrc}
+                                alt=""
+                                aria-hidden="true"
+                                className={cn(
+                                  "mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7",
+                                  isOffline
+                                    ? "opacity-85"
+                                    : "transition-transform duration-200 group-hover:-translate-y-1.5",
+                                )}
+                                loading="lazy"
+                              />
+                              <p
+                                className={cn(
+                                  "text-lg font-bold sm:text-xl",
+                                  isOffline
+                                    ? "text-muted-foreground"
+                                    : "text-foreground transition-transform duration-200 group-hover:-translate-y-1.5",
+                                )}
+                              >
+                                {site.subdomain}
+                              </p>
+                              <p
+                                className={cn(
+                                  "mt-1 text-xs text-muted-foreground",
+                                  isOffline
+                                    ? "opacity-100"
+                                    : "opacity-0 translate-y-1 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100",
+                                )}
+                              >
+                                {isOffline ? `${site.upstream}` : site.upstream}
+                              </p>
+                            </div>
+                          </a>
+                        );
+                      }}
+                    </SiteReachabilityClient>
+                  );
+                }
+
+                return (
+                  <article key={site.id} className={tileClasses}>
+                    <div className="relative flex h-full items-center justify-center">
+                      <div className="text-center">
+                        <img
+                          src={faviconSrc}
+                          alt=""
+                          aria-hidden="true"
+                          className="mx-auto mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
+                          loading="lazy"
+                        />
+                        <p className="text-lg font-bold text-foreground sm:text-xl">
+                          {site.subdomain}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground opacity-80">
+                          {site.upstream}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => openEditModal(site.id)}
+                        className="absolute right-0 top-0"
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </section>
-        )}
-      </SiteReachabilityClient>
+        ))}
+      </section>
 
       <SiteEditModal
         key={modalInstanceKey}
