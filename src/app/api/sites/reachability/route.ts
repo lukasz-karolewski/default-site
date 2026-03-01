@@ -4,20 +4,27 @@ import { checkSiteReachability } from "~/lib/ui/siteReachability";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const upstream = searchParams.get("upstream");
-  const subdomain = searchParams.get("subdomain");
+  const subdomain = searchParams.get("subdomain")?.trim();
 
-  if (!upstream) {
+  if (!subdomain) {
     return NextResponse.json(
-      { error: "Missing 'upstream' query parameter." },
+      { error: "Missing 'subdomain' query parameter." },
       { status: 400 },
     );
   }
 
   const config = await getSiteConfig();
-  const online = await checkSiteReachability(upstream, {
+  const baseDomain = config?.baseDomain?.trim();
+  if (!baseDomain) {
+    return NextResponse.json(
+      { error: "Base domain is not configured." },
+      { status: 400 },
+    );
+  }
+
+  const online = await checkSiteReachability({
     subdomain,
-    baseDomain: config?.baseDomain,
+    baseDomain,
   });
   return NextResponse.json({ online });
 }

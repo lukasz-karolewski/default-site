@@ -93,9 +93,9 @@ export default function SiteEditModal({
   }, [deleteState, notify, onOpenChange]);
 
   const handleDetectFavicon = useCallback(async () => {
-    const upstream = upstreamRef.current?.value?.trim();
-    if (!upstream) {
-      setDetectError("Enter a redirect address first.");
+    const subdomain = subdomainRef.current?.value?.trim() ?? "";
+    if (!subdomain) {
+      setDetectError("Enter a subdomain first.");
       return;
     }
 
@@ -103,10 +103,15 @@ export default function SiteEditModal({
     setDetectError(null);
 
     try {
-      const subdomain = subdomainRef.current?.value?.trim() ?? "";
-      const query = new URLSearchParams({ upstream, subdomain });
+      const query = new URLSearchParams({ subdomain });
       const res = await fetch(`/api/sites/detect-favicon?${query.toString()}`);
       const data = await res.json();
+
+      if (!res.ok) {
+        setDetectedFavicon(null);
+        setDetectError(data.error ?? "Failed to detect favicon.");
+        return;
+      }
 
       if (data.favicon) {
         setDetectedFavicon(data.favicon);
@@ -125,7 +130,7 @@ export default function SiteEditModal({
 
   // Preview src: detected favicon, existing site favicon, or generated avatar
   const subdomainForAvatar =
-    site?.subdomain || upstreamRef.current?.value || "?";
+    subdomainRef.current?.value || site?.subdomain || "?";
   const previewSrc = detectedFavicon || generateAvatarSvg(subdomainForAvatar);
 
   return (

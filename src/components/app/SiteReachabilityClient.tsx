@@ -27,10 +27,7 @@ export default function SiteReachabilityClient({
       let nextOnline = false;
 
       try {
-        const query = new URLSearchParams({
-          upstream: site.upstream,
-          subdomain: site.subdomain,
-        });
+        const query = new URLSearchParams({ subdomain: site.subdomain });
         const response = await fetch(`/api/sites/reachability?${query}`, {
           cache: "no-store",
         });
@@ -48,7 +45,7 @@ export default function SiteReachabilityClient({
     return () => {
       active = false;
     };
-  }, [site.subdomain, site.upstream]);
+  }, [site.subdomain]);
 
   return <>{children(isOnline)}</>;
 }
