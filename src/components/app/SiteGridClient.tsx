@@ -88,7 +88,8 @@ export default function SiteGridClient({
           <section className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
             {sortedSites.map((site) => {
               const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
-              const faviconSrc = site.favicon || generateAvatarSvg(site.subdomain);
+              const faviconSrc =
+                site.favicon || generateAvatarSvg(site.subdomain);
               const tileClasses =
                 "group relative aspect-square overflow-hidden border border-border bg-background px-2 py-3 transition-colors hover:bg-muted/25 sm:px-4 sm:py-5";
               const isOffline = onlineBySiteId[site.id] === false;
@@ -104,7 +105,11 @@ export default function SiteGridClient({
                       tileClasses,
                       isOffline && "opacity-45 saturate-0 hover:bg-background",
                     )}
-                    aria-label={isOffline ? `${site.subdomain} is offline` : `Open ${site.subdomain}`}
+                    aria-label={
+                      isOffline
+                        ? `${site.subdomain} is offline`
+                        : `Open ${site.subdomain}`
+                    }
                   >
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                       <img
