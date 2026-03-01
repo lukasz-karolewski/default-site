@@ -29,6 +29,7 @@ export default function SiteGridClient({
     () => sites.find((site) => site.id === selectedSiteId),
     [sites, selectedSiteId],
   );
+  const modalInstanceKey = `${modalMode}:${selectedSiteId ?? "new"}:${modalOpen ? "open" : "closed"}`;
   const sortedSites = useMemo(
     () =>
       [...sites].sort((a, b) =>
@@ -191,6 +192,7 @@ export default function SiteGridClient({
       </SiteReachabilityClient>
 
       <SiteEditModal
+        key={modalInstanceKey}
         open={modalOpen}
         onOpenChange={setModalOpen}
         mode={modalMode}
