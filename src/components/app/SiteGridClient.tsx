@@ -58,10 +58,16 @@ export default function SiteGridClient({
       }
     }
 
-    return Array.from(groups.entries()).map(([redirectHost, group]) => ({
-      redirectHost,
-      sites: group,
-    }));
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => {
+        if (a.toLowerCase().includes("localhost")) return -1;
+        if (b.toLowerCase().includes("localhost")) return 1;
+        return 0;
+      })
+      .map(([redirectHost, group]) => ({
+        redirectHost,
+        sites: group,
+      }));
   }, [sites]);
 
   function openAddModal() {
