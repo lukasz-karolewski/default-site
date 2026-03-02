@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { extractFaviconFromHtml } from "./faviconDetect";
+import { extractFaviconsFromHtml } from "./faviconDetect";
 
 const BASE = "http://localhost:3000";
 
-describe("extractFaviconFromHtml", () => {
+describe("extractFaviconsFromHtml", () => {
   it("extracts a standard rel=icon link", () => {
     const html = `
       <html><head>
         <link rel="icon" href="/favicon.png">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "http://localhost:3000/favicon.png",
-    );
+    ]);
   });
 
   it("extracts a shortcut icon link", () => {
@@ -19,9 +19,9 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="shortcut icon" href="/icons/fav.ico">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "http://localhost:3000/icons/fav.ico",
-    );
+    ]);
   });
 
   it("extracts an apple-touch-icon link", () => {
@@ -29,9 +29,9 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="apple-touch-icon" href="/apple-icon.png">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "http://localhost:3000/apple-icon.png",
-    );
+    ]);
   });
 
   it("resolves a relative path against the base URL", () => {
@@ -39,9 +39,9 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="icon" href="assets/icon.svg">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, `${BASE}/app/`)).toBe(
+    expect(extractFaviconsFromHtml(html, `${BASE}/app/`)).toEqual([
       "http://localhost:3000/app/assets/icon.svg",
-    );
+    ]);
   });
 
   it("returns an absolute URL as-is", () => {
@@ -49,20 +49,32 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="icon" href="https://cdn.example.com/icon.png">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "https://cdn.example.com/icon.png",
-    );
+    ]);
   });
 
-  it("returns the first icon link when multiple are present", () => {
+  it("returns all icon links when multiple are present", () => {
     const html = `
       <html><head>
         <link rel="icon" type="image/png" href="/first.png">
         <link rel="icon" type="image/svg+xml" href="/second.svg">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "http://localhost:3000/first.png",
-    );
+      "http://localhost:3000/second.svg",
+    ]);
+  });
+
+  it("deduplicates repeated icon links", () => {
+    const html = `
+      <html><head>
+        <link rel="icon" href="/favicon.png">
+        <link rel="shortcut icon" href="/favicon.png">
+      </head><body></body></html>`;
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
+      "http://localhost:3000/favicon.png",
+    ]);
   });
 
   it("returns null when no favicon link exists", () => {
@@ -70,11 +82,11 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="stylesheet" href="/styles.css">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBeNull();
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([]);
   });
 
   it("returns null for empty HTML", () => {
-    expect(extractFaviconFromHtml("", BASE)).toBeNull();
+    expect(extractFaviconsFromHtml("", BASE)).toEqual([]);
   });
 
   it("handles a link with no href gracefully", () => {
@@ -82,7 +94,7 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="icon">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBeNull();
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([]);
   });
 
   it("is case-insensitive for the rel attribute", () => {
@@ -90,8 +102,8 @@ describe("extractFaviconFromHtml", () => {
       <html><head>
         <link rel="ICON" href="/upper.ico">
       </head><body></body></html>`;
-    expect(extractFaviconFromHtml(html, BASE)).toBe(
+    expect(extractFaviconsFromHtml(html, BASE)).toEqual([
       "http://localhost:3000/upper.ico",
-    );
+    ]);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { GlobeIcon, Loader2Icon, XIcon } from "lucide-react";
+import { CheckIcon, GlobeIcon, Loader2Icon, XIcon } from "lucide-react";
 import {
   useActionState,
   useCallback,
@@ -8,17 +8,16 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import {
   InputGroup,
@@ -61,7 +60,8 @@ export default function SiteEditModal({
     initialState,
   );
 
-  const [detectedFavicon, setDetectedFavicon] = useState<string | null>(null);
+  const [detectedFavicons, setDetectedFavicons] = useState<string[]>([]);
+  const [selectedFavicon, setSelectedFavicon] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState<string | null>(null);
   const subdomainRef = useRef<HTMLInputElement>(null);
@@ -75,7 +75,8 @@ export default function SiteEditModal({
 
   // Reset favicon state when site prop changes (e.g. opening a different site)
   useEffect(() => {
-    setDetectedFavicon(site?.favicon ?? null);
+    setSelectedFavicon(site?.favicon ?? null);
+    setDetectedFavicons(site?.favicon ? [site.favicon] : []);
     setDetectError(null);
     setDetecting(false);
   }, [site?.favicon]);
@@ -108,21 +109,25 @@ export default function SiteEditModal({
       const data = await res.json();
 
       if (!res.ok) {
-        setDetectedFavicon(null);
+        setDetectedFavicons([]);
+        setSelectedFavicon(null);
         setDetectError(data.error ?? "Failed to detect favicon.");
         return;
       }
 
-      if (data.favicon) {
-        setDetectedFavicon(data.favicon);
+      if (Array.isArray(data.favicons) && data.favicons.length > 0) {
+        setDetectedFavicons(data.favicons);
+        setSelectedFavicon(data.favicons[0] ?? null);
         setDetectError(null);
       } else {
-        setDetectedFavicon(null);
+        setDetectedFavicons([]);
+        setSelectedFavicon(null);
         setDetectError("No favicon found at this address.");
       }
     } catch {
       setDetectError("Failed to connect.");
-      setDetectedFavicon(null);
+      setDetectedFavicons([]);
+      setSelectedFavicon(null);
     } finally {
       setDetecting(false);
     }
@@ -131,15 +136,18 @@ export default function SiteEditModal({
   // Preview src: detected favicon, existing site favicon, or generated avatar
   const subdomainForAvatar =
     subdomainRef.current?.value || site?.subdomain || "?";
-  const previewSrc = detectedFavicon || generateAvatarSvg(subdomainForAvatar);
+  const previewSrc = selectedFavicon || generateAvatarSvg(subdomainForAvatar);
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent size="sm" className="max-w-md">
-        <AlertDialogHeader className="place-items-start text-left">
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[88vh] sm:max-w-md overflow-x-hidden overflow-y-auto"
+      >
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
 
         <form
           key={formKey}
@@ -148,7 +156,7 @@ export default function SiteEditModal({
           className="grid gap-3"
         >
           <input type="hidden" name="id" value={site?.id ?? ""} />
-          <input type="hidden" name="favicon" value={detectedFavicon ?? ""} />
+          <input type="hidden" name="favicon" value={selectedFavicon ?? ""} />
 
           <div className="grid gap-1.5">
             <Label htmlFor="subdomain">Subdomain</Label>
@@ -196,34 +204,72 @@ export default function SiteEditModal({
 
           <div className="grid gap-1.5">
             <Label>Favicon</Label>
-            <div className="flex items-center gap-3">
-              <img
-                src={previewSrc}
-                alt=""
-                aria-hidden="true"
-                className="h-8 w-8 rounded object-contain"
-              />
-              {detectedFavicon ? (
-                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            {detectedFavicons.length > 0 ? (
+              <div className="grid gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {detectedFavicons.map((favicon) => {
+                    const isSelected = selectedFavicon === favicon;
+                    return (
+                      <button
+                        key={favicon}
+                        type="button"
+                        onClick={() => setSelectedFavicon(favicon)}
+                        title={favicon}
+                        className={`relative flex size-10 items-center justify-center rounded border bg-white p-1 transition-colors ${
+                          isSelected
+                            ? "border-foreground ring-1 ring-foreground"
+                            : "border-input hover:border-foreground/40"
+                        }`}
+                      >
+                        <img
+                          src={favicon}
+                          alt=""
+                          className="size-6 object-contain"
+                        />
+                        {isSelected && (
+                          <span className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-foreground text-background">
+                            <CheckIcon className="size-2.5" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-xs text-muted-foreground">
-                    {detectedFavicon}
+                    {selectedFavicon
+                      ? selectedFavicon.split("/").pop()
+                      : "Select a favicon"}
                   </span>
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setDetectedFavicon(null)}
+                    size="sm"
+                    onClick={() => {
+                      setDetectedFavicons([]);
+                      setSelectedFavicon(null);
+                    }}
                     aria-label="Clear favicon"
+                    className="h-auto shrink-0 px-1.5 py-0.5 text-xs"
                   >
                     <XIcon className="size-3" />
+                    Clear
                   </Button>
                 </div>
-              ) : (
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <img
+                  src={previewSrc}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-8 rounded object-contain"
+                />
                 <span className="text-xs text-muted-foreground">
                   {detectError ?? "Auto-generated avatar. Hit Test to detect."}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </form>
 
@@ -233,9 +279,9 @@ export default function SiteEditModal({
           </form>
         ) : null}
 
-        <AlertDialogFooter className="mt-2 !flex !flex-row items-center justify-end gap-2 group-data-[size=sm]/alert-dialog-content:!flex group-data-[size=sm]/alert-dialog-content:!grid-cols-none">
+        <DialogFooter className="mt-2 flex flex-row items-center justify-end gap-2">
           {mode === "edit" && site ? (
-            <AlertDialogAction
+            <Button
               variant="destructive"
               type="submit"
               form="site-delete-form"
@@ -243,19 +289,21 @@ export default function SiteEditModal({
               className="mr-auto"
             >
               {deletePending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
+            </Button>
           ) : null}
 
-          <AlertDialogAction
+          <Button
             type="submit"
             form="site-save-form"
             disabled={savePending || deletePending}
           >
             {savePending ? "Saving..." : mode === "add" ? "Add" : "Save"}
-          </AlertDialogAction>
-          <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+          <DialogClose render={<Button variant="outline" type="button" />}>
+            Cancel
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

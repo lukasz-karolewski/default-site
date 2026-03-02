@@ -2,14 +2,15 @@ import { parse } from "node-html-parser";
 import { buildSiteUrl } from "./siteLink";
 
 /**
- * Extract the best favicon URL from an HTML string.
+ * Extract favicon URLs from an HTML string.
  * Checks `<link>` tags whose `rel` contains "icon".
  */
-export function extractFaviconFromHtml(
+export function extractFaviconsFromHtml(
   html: string,
   baseUrl: string,
-): string | null {
+): string[] {
   const root = parse(html);
+  const found = new Set<string>();
 
   const linkTags = root.querySelectorAll("link");
   for (const link of linkTags) {
@@ -20,26 +21,26 @@ export function extractFaviconFromHtml(
     if (!href) continue;
 
     try {
-      return new URL(href, baseUrl).toString();
+      found.add(new URL(href, baseUrl).toString());
     } catch {}
   }
 
-  return null;
+  return [...found];
 }
 
 /**
  * Detect a favicon by probing site targets and parsing HTML
  * and parsing `<link rel="icon">` tags.
  *
- * Returns the absolute favicon URL, or `null` if none found.
+ * Returns absolute favicon URLs, or an empty array if none found.
  */
 export async function detectFavicon(options: {
   subdomain?: string | null;
   baseDomain?: string | null;
-}): Promise<string | null> {
+}): Promise<string[]> {
   const subdomain = options.subdomain?.trim();
   const baseDomain = options.baseDomain?.trim();
-  if (!subdomain || !baseDomain) return null;
+  if (!subdomain || !baseDomain) return [];
 
   const targetUrl = buildSiteUrl(subdomain, baseDomain);
   const controller = new AbortController();
@@ -57,7 +58,7 @@ export async function detectFavicon(options: {
         }`,
       );
     }
-    return null;
+    return [];
   } finally {
     clearTimeout(timeout);
   }
@@ -66,7 +67,7 @@ export async function detectFavicon(options: {
 async function detectFromTarget(
   targetUrl: string,
   signal: AbortSignal,
-): Promise<string | null> {
+): Promise<string[]> {
   const res = await fetch(targetUrl, {
     signal,
     headers: {
@@ -75,8 +76,8 @@ async function detectFromTarget(
     redirect: "follow",
   });
 
-  if (!res.headers.get("content-type")?.includes("text/html")) return null;
+  if (!res.headers.get("content-type")?.includes("text/html")) return [];
 
   const html = await res.text();
-  return extractFaviconFromHtml(html, targetUrl);
+  return extractFaviconsFromHtml(html, targetUrl);
 }
