@@ -42,21 +42,18 @@ No `BASE_DOMAIN`. No `Caddyfile.custom`.
 
 ## Troubleshooting Caddy API Connectivity
 
-If the app reports `fetch failed` when syncing with Caddy, verify the stored `caddyApi` value.
+This app supports one Docker Caddy admin setup:
 
-- `0.0.0.0` is a bind/listen address, not a routable client destination.
-- From the app container, `http://0.0.0.0:2019` can fail with `ECONNREFUSED`.
-- Use a reachable host endpoint instead, typically `http://host.docker.internal:2019` (Linux compose in this repo already sets `extra_hosts: host.docker.internal:host-gateway`).
+- Store `caddyApi` as `http://host.docker.internal:2019`.
+- The app always sends `Origin: http://localhost:2019` to the Caddy admin API.
+- The generated Caddyfile always writes `origins localhost:2019 127.0.0.1:2019`.
+- Linux compose in this repo already maps `host.docker.internal` through `extra_hosts: host-gateway`.
 
-Common failure pattern:
+Do not use `0.0.0.0:2019` as the client URL. It is a bind address, not a routable destination.
 
-1. Caddyfile contains `admin 0.0.0.0:2019`.
-2. Onboarding/import detects this and stores it as `caddyApi`.
-3. App tries to call `http://0.0.0.0:2019/load` and sync fails.
+If sync fails:
 
-Fix:
-
-1. Update onboarding settings and set `caddyApi` to `http://host.docker.internal:2019` (or your host IP).
+1. Update onboarding settings so `caddyApi` is `http://host.docker.internal:2019`.
 2. Retry sync from the dashboard.
 
 ## Environment variables

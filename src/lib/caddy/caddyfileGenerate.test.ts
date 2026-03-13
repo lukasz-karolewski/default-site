@@ -30,7 +30,7 @@ describe("generateCaddyfile", () => {
     mockGetSiteConfig.mockResolvedValue({
       id: "singleton",
       baseDomain: "test.com",
-      caddyApi: "http://localhost:2019",
+      caddyApi: "http://host.docker.internal:2019",
       dashboardUpstream: "localhost:3080",
       siteBlockDirectives: "tls internal\nlog",
       onboardingStatus: "completed",
@@ -41,6 +41,8 @@ describe("generateCaddyfile", () => {
     mockGetSites.mockResolvedValue([]);
     const result = await generateCaddyfile();
 
+    expect(result).toContain("admin 0.0.0.0:2019 {");
+    expect(result).toContain("origins localhost:2019 127.0.0.1:2019");
     expect(result).toContain("*.test.com, test.com {");
     expect(result).toContain("\ttls internal");
     expect(result).toContain("\tlog");
@@ -64,7 +66,7 @@ describe("generateCaddyfile", () => {
     mockGetSiteConfig.mockResolvedValue({
       id: "singleton",
       baseDomain: "test.com",
-      caddyApi: "http://localhost:2019",
+      caddyApi: "http://host.docker.internal:2019",
       dashboardUpstream: "localhost:3080",
       siteBlockDirectives: "tls internal",
       onboardingStatus: "pending",
@@ -93,6 +95,7 @@ example.com {
 
     expect(result).toContain("email admin@example.com");
     expect(result).toContain("admin 0.0.0.0:2019 {");
+    expect(result).toContain("origins localhost:2019 127.0.0.1:2019");
     expect(result).toContain("*.test.com, test.com {");
   });
 });

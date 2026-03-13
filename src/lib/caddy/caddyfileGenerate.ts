@@ -7,10 +7,6 @@ import { getCaddyfilePath } from "~/lib/shared/paths";
 
 export const CADDY_ADMIN_ALLOWED_ORIGINS = ["localhost:2019", "127.0.0.1:2019"];
 
-const REQUIRED_ADMIN_BLOCK = `\tadmin 0.0.0.0:2019 {
-\t\torigins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}
-\t}`;
-
 interface ManagedBlockInput {
   baseDomain: string;
   siteBlockDirectives: string;
@@ -39,6 +35,10 @@ function buildManagedSiteBlock(input: ManagedBlockInput): string {
   return `${header}\n\n*.${baseDomain}, ${baseDomain} {\n${inner}\n}\n`;
 }
 
+function buildRequiredAdminBlock(): string {
+  return `\tadmin 0.0.0.0:2019 {\n\t\torigins ${CADDY_ADMIN_ALLOWED_ORIGINS.join(" ")}\n\t}`;
+}
+
 function ensureAdminGlobalOptions(globalOptions: string): string {
   const trimmed = globalOptions.trim();
   const body = trimmed ? trimmed.replace(/^\{\s*|\s*\}$/g, "") : "";
@@ -48,9 +48,10 @@ function ensureAdminGlobalOptions(globalOptions: string): string {
     .replace(/^\s*admin\b[^\n]*$/gm, "")
     .trim();
 
+  const requiredAdminBlock = buildRequiredAdminBlock();
   const pieces = withoutAdmin
-    ? [withoutAdmin, REQUIRED_ADMIN_BLOCK]
-    : [REQUIRED_ADMIN_BLOCK];
+    ? [withoutAdmin, requiredAdminBlock]
+    : [requiredAdminBlock];
   return `{\n${pieces.join("\n\n")}\n}`;
 }
 

@@ -27,19 +27,28 @@ export interface CaddySyncResult {
   pendingChanges: boolean;
 }
 export const CADDY_LOAD_PATH = "/load";
+const CADDY_ADMIN_ORIGIN = "http://localhost:2019";
+
+async function applyConfig(url: string, caddyfile: string): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/caddyfile",
+      Origin: CADDY_ADMIN_ORIGIN,
+    },
+    body: caddyfile,
+  });
+}
 
 async function pushConfigToCaddyApi(
   caddyfile: string,
 ): Promise<CaddyApplyResult> {
   const config = await getSiteConfig();
   const caddyApi = config?.caddyApi ?? "";
+  const loadUrl = buildCaddyUrl(caddyApi, CADDY_LOAD_PATH);
 
   try {
-    const resp = await fetch(buildCaddyUrl(caddyApi, CADDY_LOAD_PATH), {
-      method: "POST",
-      headers: { "Content-Type": "text/caddyfile" },
-      body: caddyfile,
-    });
+    const resp = await applyConfig(loadUrl, caddyfile);
 
     if (!resp.ok) {
       const body = await resp.text();
