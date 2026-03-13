@@ -18,6 +18,7 @@ interface CaddyApplyResult {
   error: string | null;
   status: number | null;
 }
+export type { CaddyApplyResult };
 
 export interface CaddySyncResult {
   attempted: boolean;
@@ -40,7 +41,7 @@ async function applyConfig(url: string, caddyfile: string): Promise<Response> {
   });
 }
 
-async function pushConfigToCaddyApi(
+export async function applyCaddyfileToCaddyApi(
   caddyfile: string,
 ): Promise<CaddyApplyResult> {
   const config = await getSiteConfig();
@@ -77,7 +78,7 @@ export async function syncCaddy(): Promise<CaddySyncResult> {
   try {
     const caddyfile = await renderAndWriteCaddyfile();
     await markCaddyPending();
-    const result = await pushConfigToCaddyApi(caddyfile);
+    const result = await applyCaddyfileToCaddyApi(caddyfile);
 
     if (!result.ok) {
       await markCaddyFailure(result.error ?? "Unknown Caddy API error");

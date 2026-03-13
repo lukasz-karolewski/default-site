@@ -3,12 +3,18 @@ export function getUpstreamRedirectHost(upstream: string): string {
   if (!trimmed) return "";
 
   try {
-    const url = new URL(trimmed);
-    if (!/^https?:$/.test(url.protocol)) {
-      return "";
+    if (/^https?:\/\//i.test(trimmed)) {
+      const url = new URL(trimmed);
+      if (!/^https?:$/.test(url.protocol)) {
+        return "";
+      }
+      return url.hostname.toLowerCase();
     }
-    return url.hostname.toLowerCase();
-  } catch {
-    return "";
-  }
+
+    if (/^[a-z0-9.-]+:\d+(?:\/.*)?$/i.test(trimmed)) {
+      return new URL(`http://${trimmed}`).hostname.toLowerCase();
+    }
+  } catch {}
+
+  return "";
 }

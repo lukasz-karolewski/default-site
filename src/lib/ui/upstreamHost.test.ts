@@ -8,10 +8,13 @@ describe("getUpstreamRedirectHost", () => {
       "example.com",
     );
     expect(getUpstreamRedirectHost("http://APP.LOCAL:443")).toBe("app.local");
+    expect(getUpstreamRedirectHost("localhost:3000")).toBe("localhost");
+    expect(getUpstreamRedirectHost("example.com:8080/path")).toBe(
+      "example.com",
+    );
   });
 
   it("returns empty string for invalid input", () => {
-    expect(getUpstreamRedirectHost("localhost:3000")).toBe("");
     expect(getUpstreamRedirectHost("not a url")).toBe("");
   });
 });

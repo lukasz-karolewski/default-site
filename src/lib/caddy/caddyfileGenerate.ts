@@ -1,11 +1,12 @@
 import fs from "node:fs/promises";
 import { extractGlobalOptionsBlock } from "~/lib/caddy/caddyfileParser";
-
+import type { SiteRecord } from "~/lib/data/schema";
 import { getSiteConfig } from "~/lib/data/siteConfig";
 import { getSites } from "~/lib/data/siteService";
 import { getCaddyfilePath } from "~/lib/shared/paths";
 
 export const CADDY_ADMIN_ALLOWED_ORIGINS = ["localhost:2019", "127.0.0.1:2019"];
+export type ManagedSiteRoute = Pick<SiteRecord, "subdomain" | "upstream">;
 
 interface ManagedBlockInput {
   baseDomain: string;
@@ -55,7 +56,9 @@ function ensureAdminGlobalOptions(globalOptions: string): string {
   return `{\n${pieces.join("\n\n")}\n}`;
 }
 
-export async function generateCaddyfile(): Promise<string> {
+export async function generateCaddyfile(
+  managedSites?: ManagedSiteRoute[],
+): Promise<string> {
   const siteConfig = await getSiteConfig();
   if (!siteConfig || siteConfig.onboardingStatus !== "completed") {
     throw new Error(
@@ -64,7 +67,7 @@ export async function generateCaddyfile(): Promise<string> {
   }
 
   const [sites, existingCaddyfile] = await Promise.all([
-    getSites(),
+    managedSites ? Promise.resolve(managedSites) : getSites(),
     fs.readFile(getCaddyfilePath(), "utf8").catch(() => ""),
   ]);
 

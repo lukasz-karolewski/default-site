@@ -23,6 +23,14 @@ On first start, the app:
 4. On completion, writes Caddyfile and attempts Caddy Admin API reload.
 5. If reload fails, shows inline manual recovery commands.
 
+## Site Management
+
+In the add/edit site modal:
+
+- `Test` applies a preview config to Caddy through the admin API only.
+- After the preview config is live, the app attempts favicon detection for that subdomain.
+- `Add` / `Save` writes the managed Caddyfile, persists the site in SQLite, and then reloads Caddy.
+
 ## Deployment
 
 ### Docker compose

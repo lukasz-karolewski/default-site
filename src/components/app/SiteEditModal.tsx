@@ -66,6 +66,7 @@ export default function SiteEditModal({
   const [detectError, setDetectError] = useState<string | null>(null);
   const subdomainRef = useRef<HTMLInputElement>(null);
   const upstreamRef = useRef<HTMLInputElement>(null);
+  const siteId = site?.id;
 
   const title = mode === "add" ? "Add site" : "Edit site";
   const description =
@@ -95,8 +96,13 @@ export default function SiteEditModal({
 
   const handleDetectFavicon = useCallback(async () => {
     const subdomain = subdomainRef.current?.value?.trim() ?? "";
+    const upstream = upstreamRef.current?.value?.trim() ?? "";
     if (!subdomain) {
       setDetectError("Enter a subdomain first.");
+      return;
+    }
+    if (!upstream) {
+      setDetectError("Enter a redirect address first.");
       return;
     }
 
@@ -104,6 +110,24 @@ export default function SiteEditModal({
     setDetectError(null);
 
     try {
+      const testResponse = await fetch("/api/sites/test-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: siteId ?? undefined,
+          subdomain,
+          upstream,
+        }),
+      });
+      const testData = await testResponse.json();
+
+      if (!testResponse.ok) {
+        setDetectedFavicons([]);
+        setSelectedFavicon(null);
+        setDetectError(testData.error ?? "Failed to test route.");
+        return;
+      }
+
       const query = new URLSearchParams({ subdomain });
       const res = await fetch(`/api/sites/detect-favicon?${query.toString()}`);
       const data = await res.json();
@@ -131,7 +155,7 @@ export default function SiteEditModal({
     } finally {
       setDetecting(false);
     }
-  }, []);
+  }, [siteId]);
 
   // Preview src: detected favicon, existing site favicon, or generated avatar
   const subdomainForAvatar =

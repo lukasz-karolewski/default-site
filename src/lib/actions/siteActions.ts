@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { syncCaddy } from "~/lib/caddy/caddySync";
 import { addSite, removeSite, updateSite } from "~/lib/data/siteService";
+import { normalizeSiteInput, validateSiteInput } from "~/lib/sites/siteInput";
 
 export interface SiteActionState {
   ok: boolean;
@@ -21,21 +22,15 @@ function toNotice(
 
 async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
   const id = (formData.get("id")?.toString() ?? "").trim();
-  const subdomain = (formData.get("subdomain")?.toString() ?? "")
-    .trim()
-    .toLowerCase();
-  const upstream = (formData.get("upstream")?.toString() ?? "").trim();
+  const { subdomain, upstream } = normalizeSiteInput({
+    subdomain: formData.get("subdomain")?.toString() ?? "",
+    upstream: formData.get("upstream")?.toString() ?? "",
+  });
   const favicon = (formData.get("favicon")?.toString() ?? "").trim() || null;
 
-  if (!subdomain || !upstream) {
-    return { ok: false, message: "Subdomain and upstream are required." };
-  }
-
-  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(subdomain)) {
-    return {
-      ok: false,
-      message: "Subdomain may only contain letters, digits, and hyphens.",
-    };
+  const validationError = validateSiteInput({ subdomain, upstream });
+  if (validationError) {
+    return { ok: false, message: validationError };
   }
 
   try {
