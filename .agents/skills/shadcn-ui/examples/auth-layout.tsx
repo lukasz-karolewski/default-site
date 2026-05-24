@@ -3,124 +3,124 @@
 
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
 
 export function AuthLayout() {
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		setIsLoading(true);
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsLoading(true);
 
-		// Simulate API call
-		setTimeout(() => {
-			setIsLoading(false);
-		}, 2000);
-	}
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  }
 
-	return (
-		<div className="flex min-h-screen items-center justify-center bg-muted/40">
-			<Tabs defaultValue="login" className="w-100">
-				<TabsList className="grid w-full grid-cols-2">
-					<TabsTrigger value="login">Login</TabsTrigger>
-					<TabsTrigger value="register">Register</TabsTrigger>
-				</TabsList>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/40">
+      <Tabs className="w-100" defaultValue="login">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="register">Register</TabsTrigger>
+        </TabsList>
 
-				<TabsContent value="login">
-					<Card>
-						<CardHeader>
-							<CardTitle>Login</CardTitle>
-							<CardDescription>
-								Enter your credentials to access your account.
-							</CardDescription>
-						</CardHeader>
-						<form onSubmit={onSubmit}>
-							<CardContent className="space-y-4">
-								<div className="space-y-2">
-									<Label htmlFor="email">Email</Label>
-									<Input
-										id="email"
-										type="email"
-										placeholder="m@example.com"
-										required
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="password">Password</Label>
-									<Input id="password" type="password" required />
-								</div>
-							</CardContent>
-							<CardFooter className="flex flex-col space-y-4">
-								<Button type="submit" className="w-full" disabled={isLoading}>
-									{isLoading ? "Signing in..." : "Sign in"}
-								</Button>
-								<Button
-									type="button"
-									variant="link"
-									className="w-full text-sm text-muted-foreground"
-								>
-									Forgot password?
-								</Button>
-							</CardFooter>
-						</form>
-					</Card>
-				</TabsContent>
+        <TabsContent value="login">
+          <Card>
+            <CardHeader>
+              <CardTitle>Login</CardTitle>
+              <CardDescription>
+                Enter your credentials to access your account.
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={onSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    placeholder="m@example.com"
+                    required
+                    type="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" required type="password" />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4">
+                <Button className="w-full" disabled={isLoading} type="submit">
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </Button>
+                <Button
+                  className="w-full text-sm text-muted-foreground"
+                  type="button"
+                  variant="link"
+                >
+                  Forgot password?
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </TabsContent>
 
-				<TabsContent value="register">
-					<Card>
-						<CardHeader>
-							<CardTitle>Create an account</CardTitle>
-							<CardDescription>
-								Enter your information to create an account.
-							</CardDescription>
-						</CardHeader>
-						<form onSubmit={onSubmit}>
-							<CardContent className="space-y-4">
-								<div className="space-y-2">
-									<Label htmlFor="name">Name</Label>
-									<Input id="name" placeholder="John Doe" required />
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="register-email">Email</Label>
-									<Input
-										id="register-email"
-										type="email"
-										placeholder="m@example.com"
-										required
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="register-password">Password</Label>
-									<Input id="register-password" type="password" required />
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="confirm-password">Confirm Password</Label>
-									<Input id="confirm-password" type="password" required />
-								</div>
-							</CardContent>
-							<CardFooter>
-								<Button type="submit" className="w-full" disabled={isLoading}>
-									{isLoading ? "Creating account..." : "Create account"}
-								</Button>
-							</CardFooter>
-						</form>
-					</Card>
-				</TabsContent>
-			</Tabs>
-		</div>
-	);
+        <TabsContent value="register">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create an account</CardTitle>
+              <CardDescription>
+                Enter your information to create an account.
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={onSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" placeholder="John Doe" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">Email</Label>
+                  <Input
+                    id="register-email"
+                    placeholder="m@example.com"
+                    required
+                    type="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-password">Password</Label>
+                  <Input id="register-password" required type="password" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input id="confirm-password" required type="password" />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full" disabled={isLoading} type="submit">
+                  {isLoading ? "Creating account..." : "Create account"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
 /**

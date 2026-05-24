@@ -8,18 +8,18 @@ vi.mock("fs/promises", () => ({
 }));
 
 vi.mock("~/lib/data/siteService", () => ({
-  getSites: vi.fn(),
   addSite: vi.fn(),
+  getSites: vi.fn(),
 }));
 
 vi.mock("~/lib/data/siteConfig", () => ({
   getSiteConfig: vi.fn(),
-  upsertSiteConfig: vi.fn(),
   markOnboardingCompleted: vi.fn(),
   normalizeCaddyApi: vi.fn((v: string) => v.trim()),
   normalizeDirectives: vi.fn((v: string) => v.trim()),
   normalizeDomain: vi.fn((v: string) => v.trim()),
   normalizeUpstream: vi.fn((v: string) => v.trim()),
+  upsertSiteConfig: vi.fn(),
 }));
 
 vi.mock("~/lib/caddy/caddySync", () => ({
@@ -62,8 +62,8 @@ describe("onboarding bootstrap", () => {
       applied: true,
       attempted: true,
       error: null,
-      status: 200,
       pendingChanges: false,
+      status: 200,
     });
   });
 
@@ -92,12 +92,12 @@ describe("onboarding bootstrap", () => {
 
   it("applies config on startup when onboarding is completed", async () => {
     mockGetSiteConfig.mockResolvedValue({
-      id: "singleton",
       baseDomain: "example.com",
       caddyApi: "http://localhost:2019",
       dashboardUpstream: "localhost:3080",
-      siteBlockDirectives: "tls internal",
+      id: "singleton",
       onboardingStatus: "completed",
+      siteBlockDirectives: "tls internal",
     });
 
     await runStartupBootstrap();

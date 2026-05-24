@@ -29,17 +29,17 @@ export async function completeOnboardingAction(
   });
   if (result.ok) {
     return {
-      ok: true,
-      message: "Onboarding complete. Caddy config synced.",
       manualCommands: [],
+      message: "Onboarding complete. Caddy config synced.",
+      ok: true,
     };
   }
 
   return {
-    ok: false,
+    manualCommands: result.manualCommands,
     message:
       result.error ??
       "Onboarding completed, but Caddy sync requires manual action.",
-    manualCommands: result.manualCommands,
+    ok: false,
   };
 }

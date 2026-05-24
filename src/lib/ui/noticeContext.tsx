@@ -50,8 +50,8 @@ export function NoticeViewport() {
 
   return (
     <output
-      className="pointer-events-none fixed left-1/2 top-4 z-[200] -translate-x-1/2 border border-border bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-sm backdrop-blur-sm"
       aria-live="polite"
+      className="pointer-events-none fixed left-1/2 top-4 z-[200] -translate-x-1/2 border border-border bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-sm backdrop-blur-sm"
     >
       {notice}
     </output>

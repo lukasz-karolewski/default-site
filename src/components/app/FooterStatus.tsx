@@ -33,8 +33,8 @@ function DiagnosticSection({
       <dl className="mt-1 space-y-1">
         {items.map((item) => (
           <div
-            key={`${title}-${item.label}`}
             className="grid grid-cols-[150px_1fr] gap-2"
+            key={`${title}-${item.label}`}
           >
             <dt className="text-muted-foreground">{item.label}</dt>
             <dd className="break-all text-foreground/90">{item.value}</dd>
@@ -131,38 +131,38 @@ export default function FooterStatus() {
           {showDiagnostics ? (
             <>
               <Button
-                type="button"
-                size="xs"
-                variant="outline"
                 disabled={writing}
                 onClick={writeConfigNow}
+                size="xs"
+                type="button"
+                variant="outline"
               >
                 {writing ? "Writing..." : "Write config now"}
               </Button>
               <Button
-                type="button"
-                size="xs"
-                variant="outline"
                 onClick={fetchStatus}
+                size="xs"
+                type="button"
+                variant="outline"
               >
                 Refresh
               </Button>
               <Button
-                size="xs"
-                variant="outline"
                 nativeButton={false}
                 render={<Link href="/onboarding?edit=1" />}
+                size="xs"
+                variant="outline"
               >
                 Update onboarding settings
               </Button>
             </>
           ) : null}
           <Button
-            type="button"
-            size="xs"
-            variant="outline"
-            onClick={() => setShowDiagnostics((value) => !value)}
             aria-expanded={showDiagnostics}
+            onClick={() => setShowDiagnostics((value) => !value)}
+            size="xs"
+            type="button"
+            variant="outline"
           >
             {showDiagnostics ? "Hide diagnostics" : "Diagnostics"}
           </Button>
@@ -172,11 +172,11 @@ export default function FooterStatus() {
       {showDiagnostics ? (
         <div className="mt-3 space-y-2 text-xs text-muted-foreground/90">
           <div className="grid gap-2 md:grid-cols-2">
-            <DiagnosticSection title="Sync" items={syncItems} />
-            <DiagnosticSection title="Caddyfile" items={caddyfileItems} />
+            <DiagnosticSection items={syncItems} title="Sync" />
+            <DiagnosticSection items={caddyfileItems} title="Caddyfile" />
           </div>
           {errorItems.length > 0 ? (
-            <DiagnosticSection title="Errors" items={errorItems} />
+            <DiagnosticSection items={errorItems} title="Errors" />
           ) : null}
           <section className="rounded-md border border-border/70 p-2">
             <h4 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">

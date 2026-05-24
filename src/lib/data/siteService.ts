@@ -25,8 +25,8 @@ async function ensureCaddySyncStateRow() {
   await getDb()
     .insert(caddySyncState)
     .values({
-      id: CADDY_SYNC_STATE_ID,
       connected: true,
+      id: CADDY_SYNC_STATE_ID,
       pendingChanges: false,
     })
     .onConflictDoNothing({ target: caddySyncState.id })
@@ -62,7 +62,7 @@ export async function addSite(
 ) {
   return getDb()
     .insert(sites)
-    .values({ id: randomUUID(), subdomain, upstream, favicon: favicon ?? null })
+    .values({ favicon: favicon ?? null, id: randomUUID(), subdomain, upstream })
     .run();
 }
 
@@ -82,7 +82,7 @@ export async function updateSite(
 ) {
   return getDb()
     .update(sites)
-    .set({ subdomain, upstream, favicon: favicon ?? null })
+    .set({ favicon: favicon ?? null, subdomain, upstream })
     .where(eq(sites.id, id))
     .run();
 }
@@ -95,8 +95,8 @@ export async function markCaddySuccess() {
   const at = nowIso();
   await updateCaddySyncState({
     connected: true,
-    lastError: null,
     lastAttemptAt: at,
+    lastError: null,
     lastSuccessAt: at,
     pendingChanges: false,
   });
@@ -105,8 +105,8 @@ export async function markCaddySuccess() {
 export async function markCaddyFailure(error: string) {
   await updateCaddySyncState({
     connected: false,
-    lastError: error,
     lastAttemptAt: nowIso(),
+    lastError: error,
     pendingChanges: true,
   });
 }
@@ -123,11 +123,11 @@ export async function getCaddySyncStateSnapshot(): Promise<CaddySyncStateSnapsho
 
   return {
     connected: row?.connected ?? true,
-    lastError: row?.lastError ?? null,
     lastAttemptAt: row?.lastAttemptAt ?? null,
-    lastSuccessAt: row?.lastSuccessAt ?? null,
-    pendingChanges: row?.pendingChanges ?? false,
+    lastError: row?.lastError ?? null,
     lastManagedWriteAt: row?.lastManagedWriteAt ?? null,
     lastManagedWriteHash: row?.lastManagedWriteHash ?? null,
+    lastSuccessAt: row?.lastSuccessAt ?? null,
+    pendingChanges: row?.pendingChanges ?? false,
   };
 }

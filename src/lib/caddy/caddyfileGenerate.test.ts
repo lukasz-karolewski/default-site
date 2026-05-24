@@ -28,12 +28,12 @@ describe("generateCaddyfile", () => {
     vi.clearAllMocks();
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
     mockGetSiteConfig.mockResolvedValue({
-      id: "singleton",
       baseDomain: "test.com",
       caddyApi: "http://host.docker.internal:2019",
       dashboardUpstream: "localhost:3080",
-      siteBlockDirectives: "tls internal\nlog",
+      id: "singleton",
       onboardingStatus: "completed",
+      siteBlockDirectives: "tls internal\nlog",
     });
   });
 
@@ -51,7 +51,7 @@ describe("generateCaddyfile", () => {
 
   it("generates matcher blocks for sites", async () => {
     mockGetSites.mockResolvedValue([
-      { id: "1", subdomain: "ha", upstream: "localhost:8123", favicon: null },
+      { favicon: null, id: "1", subdomain: "ha", upstream: "localhost:8123" },
     ]);
 
     const result = await generateCaddyfile();
@@ -64,12 +64,12 @@ describe("generateCaddyfile", () => {
   it("throws when onboarding is not complete", async () => {
     mockGetSites.mockResolvedValue([]);
     mockGetSiteConfig.mockResolvedValue({
-      id: "singleton",
       baseDomain: "test.com",
       caddyApi: "http://host.docker.internal:2019",
       dashboardUpstream: "localhost:3080",
-      siteBlockDirectives: "tls internal",
+      id: "singleton",
       onboardingStatus: "pending",
+      siteBlockDirectives: "tls internal",
     });
 
     await expect(generateCaddyfile()).rejects.toThrow(

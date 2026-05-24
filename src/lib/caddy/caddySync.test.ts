@@ -9,11 +9,11 @@ vi.mock("fs/promises", () => ({
   writeFile: vi.fn(),
 }));
 vi.mock("~/lib/data/siteService", () => ({
+  getCaddySyncStateSnapshot: vi.fn(async () => ({ pendingChanges: false })),
   markCaddyFailure: vi.fn(),
   markCaddyfileManagedWrite: vi.fn(),
   markCaddyPending: vi.fn(),
   markCaddySuccess: vi.fn(),
-  getCaddySyncStateSnapshot: vi.fn(async () => ({ pendingChanges: false })),
 }));
 vi.mock("~/lib/data/siteConfig", () => ({
   getSiteConfig: vi.fn(async () => ({ caddyApi: "http://localhost:2019" })),
@@ -82,12 +82,12 @@ describe("syncCaddy", () => {
 
   it("uses the same admin origin with the host gateway admin URL", async () => {
     mockGetSiteConfig.mockResolvedValue({
-      id: "singleton",
       baseDomain: "mtando.com",
       caddyApi: "http://host.docker.internal:2019",
       dashboardUpstream: "localhost:3080",
-      siteBlockDirectives: "",
+      id: "singleton",
       onboardingStatus: "completed",
+      siteBlockDirectives: "",
     });
     global.fetch = vi
       .fn()

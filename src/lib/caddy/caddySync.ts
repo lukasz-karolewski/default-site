@@ -18,6 +18,7 @@ interface CaddyApplyResult {
   error: string | null;
   status: number | null;
 }
+
 export type { CaddyApplyResult };
 
 export interface CaddySyncResult {
@@ -32,12 +33,12 @@ const CADDY_ADMIN_ORIGIN = "http://localhost:2019";
 
 async function applyConfig(url: string, caddyfile: string): Promise<Response> {
   return fetch(url, {
-    method: "POST",
+    body: caddyfile,
     headers: {
       "Content-Type": "text/caddyfile",
       Origin: CADDY_ADMIN_ORIGIN,
     },
-    body: caddyfile,
+    method: "POST",
   });
 }
 
@@ -54,14 +55,14 @@ export async function applyCaddyfileToCaddyApi(
     if (!resp.ok) {
       const body = await resp.text();
       const error = `Caddy API error: ${resp.status} ${body}`.trim();
-      return { ok: false, error, status: resp.status };
+      return { error, ok: false, status: resp.status };
     }
 
-    return { ok: true, error: null, status: resp.status };
+    return { error: null, ok: true, status: resp.status };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown Caddy API error";
-    return { ok: false, error: message, status: null };
+    return { error: message, ok: false, status: null };
   }
 }
 
@@ -83,32 +84,32 @@ export async function syncCaddy(): Promise<CaddySyncResult> {
     if (!result.ok) {
       await markCaddyFailure(result.error ?? "Unknown Caddy API error");
       return {
-        attempted: true,
         applied: false,
+        attempted: true,
         error: result.error,
-        status: result.status,
         pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+        status: result.status,
       };
     }
 
     await markCaddySuccess();
     return {
-      attempted: true,
       applied: true,
+      attempted: true,
       error: null,
-      status: result.status,
       pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+      status: result.status,
     };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown Caddy apply error";
     await markCaddyFailure(message);
     return {
-      attempted: true,
       applied: false,
+      attempted: true,
       error: message,
-      status: null,
       pendingChanges: (await getCaddySyncStateSnapshot()).pendingChanges,
+      status: null,
     };
   }
 }

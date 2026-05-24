@@ -30,7 +30,7 @@ async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
 
   const validationError = validateSiteInput({ subdomain, upstream });
   if (validationError) {
-    return { ok: false, message: validationError };
+    return { message: validationError, ok: false };
   }
 
   try {
@@ -43,13 +43,13 @@ async function runSaveSiteAction(formData: FormData): Promise<SiteActionState> {
     const sync = await syncCaddy();
     revalidatePath("/");
     return {
-      ok: true,
       message: toNotice(id ? "Site updated." : "Site added.", sync),
+      ok: true,
     };
   } catch (error: unknown) {
     return {
-      ok: false,
       message: error instanceof Error ? error.message : "Failed to save site.",
+      ok: false,
     };
   }
 }
@@ -59,19 +59,19 @@ async function runDeleteSiteAction(
 ): Promise<SiteActionState> {
   const id = (formData.get("id")?.toString() ?? "").trim();
   if (!id) {
-    return { ok: false, message: "Missing site id for delete." };
+    return { message: "Missing site id for delete.", ok: false };
   }
 
   try {
     await removeSite(id);
     const sync = await syncCaddy();
     revalidatePath("/");
-    return { ok: true, message: toNotice("Site deleted.", sync) };
+    return { message: toNotice("Site deleted.", sync), ok: true };
   } catch (error: unknown) {
     return {
-      ok: false,
       message:
         error instanceof Error ? error.message : "Failed to delete site.",
+      ok: false,
     };
   }
 }

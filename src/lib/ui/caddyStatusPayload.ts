@@ -37,13 +37,13 @@ export async function buildCaddyStatusPayload(): Promise<CaddyStatusPayload> {
     return {
       ...snapshot,
       caddyfile: {
-        path: caddyfilePath,
-        exists: true,
-        modifiedAt: stat.mtime.toISOString(),
-        sizeBytes: stat.size,
-        hash: currentHash,
-        readError: null,
         changedSinceLastManagedWrite,
+        exists: true,
+        hash: currentHash,
+        modifiedAt: stat.mtime.toISOString(),
+        path: caddyfilePath,
+        readError: null,
+        sizeBytes: stat.size,
       },
     };
   } catch (error: unknown) {
@@ -52,13 +52,13 @@ export async function buildCaddyStatusPayload(): Promise<CaddyStatusPayload> {
       return {
         ...snapshot,
         caddyfile: {
-          path: caddyfilePath,
-          exists: false,
-          modifiedAt: null,
-          sizeBytes: null,
-          hash: null,
-          readError: null,
           changedSinceLastManagedWrite: null,
+          exists: false,
+          hash: null,
+          modifiedAt: null,
+          path: caddyfilePath,
+          readError: null,
+          sizeBytes: null,
         },
       };
     }
@@ -68,13 +68,13 @@ export async function buildCaddyStatusPayload(): Promise<CaddyStatusPayload> {
     return {
       ...snapshot,
       caddyfile: {
-        path: caddyfilePath,
-        exists: true,
-        modifiedAt: null,
-        sizeBytes: null,
-        hash: null,
-        readError: message,
         changedSinceLastManagedWrite: null,
+        exists: true,
+        hash: null,
+        modifiedAt: null,
+        path: caddyfilePath,
+        readError: message,
+        sizeBytes: null,
       },
     };
   }

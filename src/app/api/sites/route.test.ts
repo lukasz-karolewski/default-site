@@ -14,7 +14,7 @@ describe("GET /api/sites", () => {
 
   it("returns the site list as JSON", async () => {
     const sites = [
-      { id: "1", subdomain: "a", upstream: "localhost:3000", favicon: null },
+      { favicon: null, id: "1", subdomain: "a", upstream: "localhost:3000" },
     ];
     mockGetSites.mockResolvedValue(sites);
 

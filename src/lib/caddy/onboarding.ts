@@ -67,8 +67,8 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft> {
       caddyApi: existingConfig.caddyApi,
       dashboardUpstream:
         existingConfig.dashboardUpstream || DEFAULT_DASHBOARD_UPSTREAM,
-      siteBlockDirectives: existingConfig.siteBlockDirectives,
       importedSites: (await getSites()).length,
+      siteBlockDirectives: existingConfig.siteBlockDirectives,
     };
   }
 
@@ -106,16 +106,16 @@ export async function ensureOnboardingDraft(): Promise<OnboardingDraft> {
     baseDomain,
     caddyApi,
     dashboardUpstream,
-    siteBlockDirectives,
     onboardingStatus: "pending",
+    siteBlockDirectives,
   });
 
   return {
     baseDomain,
     caddyApi,
     dashboardUpstream,
-    siteBlockDirectives,
     importedSites: parsedSites.length,
+    siteBlockDirectives,
   };
 }
 
@@ -151,28 +151,28 @@ export async function completeOnboarding(input: {
   const siteBlockDirectives = normalizeDirectives(input.siteBlockDirectives);
 
   if (!baseDomain) {
-    return { ok: false, error: "Base domain is required.", manualCommands: [] };
+    return { error: "Base domain is required.", manualCommands: [], ok: false };
   }
 
   if (!siteBlockDirectives) {
     return {
-      ok: false,
       error: "Site config directives are required.",
       manualCommands: [],
+      ok: false,
     };
   }
   if (!caddyApi) {
     return {
-      ok: false,
       error: "Caddy API URL is required.",
       manualCommands: [],
+      ok: false,
     };
   }
   if (!dashboardUpstream) {
     return {
-      ok: false,
       error: "Dashboard upstream is required.",
       manualCommands: [],
+      ok: false,
     };
   }
 
@@ -185,13 +185,13 @@ export async function completeOnboarding(input: {
 
   const apply = await syncCaddy();
   if (apply.applied) {
-    return { ok: true, error: null, manualCommands: [] };
+    return { error: null, manualCommands: [], ok: true };
   }
 
   return {
-    ok: false,
     error: apply.error ?? "Failed to apply Caddy config.",
     manualCommands: toManualCommands(caddyApi, getCaddyfilePath()),
+    ok: false,
   };
 }
 

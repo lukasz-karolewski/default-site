@@ -20,11 +20,11 @@ export default async function OnboardingPage(props: PageProps<"/onboarding">) {
 
   return (
     <OnboardingForm
+      importedSites={draft.importedSites}
       initialBaseDomain={draft.baseDomain}
       initialCaddyApi={draft.caddyApi}
       initialDashboardUpstream={draft.dashboardUpstream}
       initialDirectives={draft.siteBlockDirectives}
-      importedSites={draft.importedSites}
     />
   );
 }

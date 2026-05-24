@@ -40,14 +40,14 @@ export default function PublishedSitesPanel({
           const siteUrl = buildSiteUrl(site.subdomain, baseDomain);
 
           return (
-            <li key={site.id} className="border-2 border-zinc-900 bg-white p-4">
+            <li className="border-2 border-zinc-900 bg-white p-4" key={site.id}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <a
                     className="brutal-link text-xl text-zinc-900 transition hover:text-red-600"
                     href={siteUrl}
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
                     {site.subdomain}
                   </a>
@@ -59,14 +59,14 @@ export default function PublishedSitesPanel({
                   <a
                     className="border-2 border-black bg-black px-2 py-1 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:bg-zinc-800"
                     href={siteUrl}
-                    target="_blank"
                     rel="noopener noreferrer"
+                    target="_blank"
                   >
                     Open
                   </a>
                   <a
-                    href={queryHref(site.id)}
                     className="border-2 border-black bg-[#ffda00] px-2 py-1 text-sm font-black uppercase tracking-[0.08em] text-black transition hover:bg-[#f2ca00]"
+                    href={queryHref(site.id)}
                   >
                     Edit
                   </a>

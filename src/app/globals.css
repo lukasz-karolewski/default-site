@@ -124,12 +124,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
     min-height: 100vh;
     font-family: var(--font-sans);
     background-image:
       linear-gradient(to right, rgb(0 0 0 / 0.02) 1px, transparent 1px),
       linear-gradient(to bottom, rgb(0 0 0 / 0.02) 1px, transparent 1px);
     background-size: 24px 24px;
+    @apply bg-background text-foreground;
   }
 }

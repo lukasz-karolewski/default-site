@@ -1,11 +1,11 @@
 {
-  "version": "0.2.0",
   "configurations": [
     {
+      "command": "npm run dev -- --inspect",
       "name": "Next.js: debug server-side",
-      "type": "node-terminal",
       "request": "launch",
-      "command": "npm run dev -- --inspect"
+      "type": "node-terminal"
     }
-  ]
+  ],
+  "version": "0.2.0"
 }

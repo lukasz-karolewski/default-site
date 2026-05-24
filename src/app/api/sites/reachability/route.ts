@@ -23,8 +23,8 @@ export async function GET(request: Request) {
   }
 
   const online = await checkSiteReachability({
-    subdomain,
     baseDomain,
+    subdomain,
   });
   return NextResponse.json({ online });
 }

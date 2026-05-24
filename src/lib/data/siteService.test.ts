@@ -19,9 +19,9 @@ describe("siteService", () => {
       const sites = await getSites();
       expect(sites).toHaveLength(1);
       expect(sites[0]).toMatchObject({
+        favicon: null,
         subdomain: "example",
         upstream: "localhost:3000",
-        favicon: null,
       });
       expect(sites[0].id).toBeTypeOf("string");
     });

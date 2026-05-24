@@ -17,9 +17,9 @@ interface OnboardingFormProps {
 }
 
 const INITIAL_STATE: OnboardingActionState = {
-  ok: false,
-  message: null,
   manualCommands: [],
+  message: null,
+  ok: false,
 };
 
 export default function OnboardingForm({
@@ -64,23 +64,23 @@ export default function OnboardingForm({
           className="rounded-md border border-border bg-background p-5 space-y-4"
         >
           <div className="space-y-1.5">
-            <label htmlFor="baseDomain" className="text-sm font-medium">
+            <label className="text-sm font-medium" htmlFor="baseDomain">
               Base domain
             </label>
             <input
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               id="baseDomain"
               name="baseDomain"
-              value={baseDomain}
               onChange={(event) => setBaseDomain(event.target.value)}
               required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={baseDomain}
             />
           </div>
 
           <div className="space-y-1.5">
             <label
-              htmlFor="siteBlockDirectives"
               className="text-sm font-medium"
+              htmlFor="siteBlockDirectives"
             >
               Site block directives
             </label>
@@ -88,48 +88,48 @@ export default function OnboardingForm({
               Applied inside the managed wildcard site block.
             </p>
             <textarea
+              className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
               id="siteBlockDirectives"
               name="siteBlockDirectives"
-              value={siteBlockDirectives}
               onChange={(event) => setSiteBlockDirectives(event.target.value)}
               required
               rows={8}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+              value={siteBlockDirectives}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="caddyApi" className="text-sm font-medium">
+            <label className="text-sm font-medium" htmlFor="caddyApi">
               Caddy API URL
             </label>
             <input
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               id="caddyApi"
               name="caddyApi"
-              value={caddyApi}
               onChange={(event) => setCaddyApi(event.target.value)}
               required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={caddyApi}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="dashboardUpstream" className="text-sm font-medium">
+            <label className="text-sm font-medium" htmlFor="dashboardUpstream">
               Dashboard upstream
             </label>
             <input
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               id="dashboardUpstream"
               name="dashboardUpstream"
-              value={dashboardUpstream}
               onChange={(event) => setDashboardUpstream(event.target.value)}
               required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={dashboardUpstream}
             />
           </div>
 
           {state.message ? (
             <output
-              className="text-sm text-muted-foreground"
               aria-live="polite"
+              className="text-sm text-muted-foreground"
             >
               {state.message}
             </output>
@@ -140,8 +140,8 @@ export default function OnboardingForm({
               <p>Manual recovery commands:</p>
               {state.manualCommands.map((command) => (
                 <pre
-                  key={command}
                   className="overflow-x-auto rounded-md border border-border bg-muted p-2"
+                  key={command}
                 >
                   <code>{command}</code>
                 </pre>
@@ -149,7 +149,7 @@ export default function OnboardingForm({
             </div>
           ) : null}
 
-          <Button type="submit" disabled={pending}>
+          <Button disabled={pending} type="submit">
             {pending ? "Applying..." : "Finish onboarding"}
           </Button>
         </form>

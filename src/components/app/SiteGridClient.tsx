@@ -90,22 +90,22 @@ export default function SiteGridClient({
         </h1>
         <div className="flex items-center gap-2">
           <Button
+            aria-label="Add site"
+            onClick={openAddModal}
+            size="icon-sm"
+            title="Add site"
             type="button"
             variant="outline"
-            size="icon-sm"
-            onClick={openAddModal}
-            aria-label="Add site"
-            title="Add site"
           >
             <PlusIcon />
           </Button>
           <Button
+            aria-label={isEditMode ? "Finish editing" : "Edit sites"}
+            onClick={() => setIsEditMode((value) => !value)}
+            size="icon-sm"
+            title={isEditMode ? "Done" : "Edit"}
             type="button"
             variant={isEditMode ? "secondary" : "outline"}
-            size="icon-sm"
-            onClick={() => setIsEditMode((value) => !value)}
-            aria-label={isEditMode ? "Finish editing" : "Edit sites"}
-            title={isEditMode ? "Done" : "Edit"}
           >
             {isEditMode ? <CheckIcon /> : <PencilIcon />}
           </Button>
@@ -121,7 +121,7 @@ export default function SiteGridClient({
         ) : null}
 
         {groupedSites.map((group) => (
-          <section key={group.redirectHost} className="space-y-2">
+          <section className="space-y-2" key={group.redirectHost}>
             <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {group.redirectHost}
             </h2>
@@ -141,23 +141,23 @@ export default function SiteGridClient({
 
                         return (
                           <a
-                            href={siteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                              tileClasses,
-                              isOffline &&
-                                "opacity-45 saturate-0 hover:bg-background",
-                            )}
                             aria-label={
                               isOffline
                                 ? `${site.subdomain} is offline`
                                 : `Open ${site.subdomain}`
                             }
+                            className={cn(
+                              tileClasses,
+                              isOffline &&
+                                "opacity-45 saturate-0 hover:bg-background",
+                            )}
+                            href={siteUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
                           >
                             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                              {/* biome-ignore lint/performance/noImgElement: Site favicons are dynamic upstream URLs or generated data URIs, which do not fit next/image without broad remote host configuration. */}
                               <img
-                                src={faviconSrc}
                                 alt=""
                                 aria-hidden="true"
                                 className={cn(
@@ -167,6 +167,7 @@ export default function SiteGridClient({
                                     : "transition-transform duration-200 group-hover:-translate-y-1.5",
                                 )}
                                 loading="lazy"
+                                src={faviconSrc}
                               />
                               <p
                                 className={cn(
@@ -197,15 +198,16 @@ export default function SiteGridClient({
                 }
 
                 return (
-                  <article key={site.id} className={tileClasses}>
+                  <article className={tileClasses} key={site.id}>
                     <div className="relative flex h-full items-center justify-center">
                       <div className="text-center">
+                        {/* biome-ignore lint/performance/noImgElement: Site favicons are stored as dynamic upstream URLs or generated data URIs. */}
                         <img
-                          src={faviconSrc}
                           alt=""
                           aria-hidden="true"
                           className="mx-auto mb-2 h-6 w-6 object-contain sm:h-7 sm:w-7"
                           loading="lazy"
+                          src={faviconSrc}
                         />
                         <p className="text-lg font-bold text-foreground sm:text-xl">
                           {site.subdomain}
@@ -215,11 +217,11 @@ export default function SiteGridClient({
                         </p>
                       </div>
                       <Button
+                        className="absolute right-0 top-0"
+                        onClick={() => openEditModal(site.id)}
+                        size="xs"
                         type="button"
                         variant="outline"
-                        size="xs"
-                        onClick={() => openEditModal(site.id)}
-                        className="absolute right-0 top-0"
                       >
                         Edit
                       </Button>
@@ -234,9 +236,9 @@ export default function SiteGridClient({
 
       <SiteEditModal
         key={modalInstanceKey}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
         mode={modalMode}
+        onOpenChange={setModalOpen}
+        open={modalOpen}
         site={selectedSite}
       />
     </NoticeProvider>

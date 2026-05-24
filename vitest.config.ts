@@ -10,8 +10,8 @@ export default defineConfig({
   test: {
     // Default to node; component tests override with @vitest-environment jsdom
     environment: "node",
+    exclude: ["**/node_modules/**", "**/.next/**", "**/dist/**"],
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    exclude: ["**/node_modules/**", "**/.next/**", "**/dist/**"],
   },
 });

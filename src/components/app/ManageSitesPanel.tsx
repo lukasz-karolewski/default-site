@@ -17,12 +17,12 @@ export default function ManageSitesPanel({
 }: ManageSitesPanelProps) {
   async function saveSiteFormAction(formData: FormData) {
     "use server";
-    await saveSiteAction({ ok: false, message: null }, formData);
+    await saveSiteAction({ message: null, ok: false }, formData);
   }
 
   async function deleteSiteFormAction(formData: FormData) {
     "use server";
-    await deleteSiteAction({ ok: false, message: null }, formData);
+    await deleteSiteAction({ message: null, ok: false }, formData);
   }
 
   return (
@@ -34,8 +34,8 @@ export default function ManageSitesPanel({
 
       {notice && (
         <output
-          className="mt-3 border-2 border-black bg-[#ffe27a] px-3 py-2 text-sm font-bold text-zinc-900"
           aria-live="polite"
+          className="mt-3 border-2 border-black bg-[#ffe27a] px-3 py-2 text-sm font-bold text-zinc-900"
         >
           {notice}
         </output>
@@ -45,24 +45,24 @@ export default function ManageSitesPanel({
         action={saveSiteFormAction}
         className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5"
       >
-        <input type="hidden" name="id" value={editingSite?.id ?? ""} />
+        <input name="id" type="hidden" value={editingSite?.id ?? ""} />
         <input
           className="border-2 border-black bg-white p-2 font-semibold text-zinc-900 placeholder:text-zinc-500 focus:outline-none md:col-span-2"
-          placeholder="Subdomain (e.g. app)"
-          name="subdomain"
           defaultValue={editingSite?.subdomain ?? ""}
+          name="subdomain"
+          placeholder="Subdomain (e.g. app)"
           required
         />
         <input
           className="border-2 border-black bg-white p-2 font-semibold text-zinc-900 placeholder:text-zinc-500 focus:outline-none md:col-span-2"
-          placeholder="Upstream (e.g. localhost:3000)"
-          name="upstream"
           defaultValue={editingSite?.upstream ?? ""}
+          name="upstream"
+          placeholder="Upstream (e.g. localhost:3000)"
           required
         />
         <button
-          type="submit"
           className="border-2 border-black bg-black px-4 py-2 font-black uppercase tracking-[0.08em] text-white transition hover:bg-zinc-800"
+          type="submit"
         >
           {editingSite ? "Update Site" : "Add Site"}
         </button>
@@ -71,17 +71,17 @@ export default function ManageSitesPanel({
       {editingSite && (
         <div className="mt-3 flex flex-wrap gap-2">
           <form action={deleteSiteFormAction}>
-            <input type="hidden" name="id" value={editingSite.id} />
+            <input name="id" type="hidden" value={editingSite.id} />
             <button
-              type="submit"
               className="border-2 border-black bg-[#ff3b30] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:bg-[#e52f25]"
+              type="submit"
             >
               Delete
             </button>
           </form>
           <a
-            href="/"
             className="border-2 border-black bg-zinc-300 px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-zinc-900 transition hover:bg-zinc-200"
+            href="/"
           >
             Cancel
           </a>

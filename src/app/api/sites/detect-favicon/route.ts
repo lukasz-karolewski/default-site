@@ -23,8 +23,8 @@ export async function GET(request: Request) {
   }
 
   const favicons = await detectFavicon({
-    subdomain,
     baseDomain,
+    subdomain,
   });
   return NextResponse.json({ favicons });
 }

@@ -1,16 +1,4 @@
 {
-  "name": "default-site",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "biome check",
-    "lint.write": "biome check --write",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
     "better-sqlite3": "^12.6.2",
@@ -43,8 +31,20 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   },
+  "name": "default-site",
   "overrides": {
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3"
-  }
+  },
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --turbopack",
+    "lint": "biome check",
+    "lint.write": "biome check --write",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "version": "0.1.0"
 }

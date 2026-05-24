@@ -21,22 +21,22 @@ export async function upsertSiteConfig(input: SiteConfigInput) {
   await getDb()
     .insert(siteConfig)
     .values({
-      id: SITE_CONFIG_ID,
       baseDomain: input.baseDomain,
       caddyApi: input.caddyApi,
       dashboardUpstream: input.dashboardUpstream,
-      siteBlockDirectives: input.siteBlockDirectives,
+      id: SITE_CONFIG_ID,
       onboardingStatus: input.onboardingStatus,
+      siteBlockDirectives: input.siteBlockDirectives,
     })
     .onConflictDoUpdate({
-      target: siteConfig.id,
       set: {
         baseDomain: input.baseDomain,
         caddyApi: input.caddyApi,
         dashboardUpstream: input.dashboardUpstream,
-        siteBlockDirectives: input.siteBlockDirectives,
         onboardingStatus: input.onboardingStatus,
+        siteBlockDirectives: input.siteBlockDirectives,
       },
+      target: siteConfig.id,
     })
     .run();
 }
@@ -51,8 +51,8 @@ export async function markOnboardingCompleted(
     baseDomain,
     caddyApi,
     dashboardUpstream,
-    siteBlockDirectives,
     onboardingStatus: "completed",
+    siteBlockDirectives,
   });
 }
 

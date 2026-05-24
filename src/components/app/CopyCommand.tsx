@@ -21,11 +21,11 @@ export default function CopyCommand({ command }: CopyCommandProps) {
 
   return (
     <button
-      type="button"
-      onClick={copy}
-      className="inline-flex items-center border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-foreground transition-colors hover:bg-muted"
-      title="Copy command"
       aria-label={`Copy command: ${command}`}
+      className="inline-flex items-center border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-foreground transition-colors hover:bg-muted"
+      onClick={copy}
+      title="Copy command"
+      type="button"
     >
       {command}
       <span className="ml-2 text-[10px] text-muted-foreground">

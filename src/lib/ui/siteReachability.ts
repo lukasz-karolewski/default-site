@@ -13,8 +13,8 @@ async function probe(
 
   try {
     return await fetch(url, {
-      method,
       cache: "no-store",
+      method,
       redirect: "follow",
       signal: controller.signal,
       ...requestInit,

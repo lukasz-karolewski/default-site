@@ -69,11 +69,11 @@ async function detectFromTarget(
   signal: AbortSignal,
 ): Promise<string[]> {
   const res = await fetch(targetUrl, {
-    signal,
     headers: {
       "User-Agent": "default-site-favicon-detect/1.0",
     },
     redirect: "follow",
+    signal,
   });
 
   if (!res.headers.get("content-type")?.includes("text/html")) return [];

@@ -23,23 +23,23 @@ export interface CaddyStatus {
 }
 
 const DEFAULT_STATUS: CaddyStatus = {
-  connected: true,
-  lastError: null,
-  lastAttemptAt: null,
-  lastSuccessAt: null,
-  pendingChanges: false,
   caddyApiUrl: "",
+  caddyfile: {
+    changedSinceLastManagedWrite: null,
+    exists: false,
+    hash: null,
+    modifiedAt: null,
+    path: "",
+    readError: null,
+    sizeBytes: null,
+  },
+  connected: true,
+  lastAttemptAt: null,
+  lastError: null,
   lastManagedWriteAt: null,
   lastManagedWriteHash: null,
-  caddyfile: {
-    path: "",
-    exists: false,
-    modifiedAt: null,
-    sizeBytes: null,
-    hash: null,
-    readError: null,
-    changedSinceLastManagedWrite: null,
-  },
+  lastSuccessAt: null,
+  pendingChanges: false,
 };
 
 export function formatTimestamp(value: string | null) {
@@ -83,8 +83,8 @@ export function useCaddyStatus() {
     setWriting(true);
     try {
       await fetch("/api/status/caddy/retry", {
-        method: "POST",
         headers: { "Content-Type": "application/json" },
+        method: "POST",
       });
       await fetchStatus();
     } finally {
@@ -108,11 +108,11 @@ export function useCaddyStatus() {
   }, [healthy, status.lastAttemptAt, status.lastSuccessAt, fetchStatus]);
 
   return {
-    status,
-    writing,
-    showDiagnostics,
     fetchStatus,
-    writeConfigNow,
     setShowDiagnostics,
+    showDiagnostics,
+    status,
+    writeConfigNow,
+    writing,
   };
 }

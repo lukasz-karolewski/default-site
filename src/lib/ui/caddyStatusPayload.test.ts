@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("fs/promises", () => ({
   default: {
-    stat: vi.fn(),
     readFile: vi.fn(),
+    stat: vi.fn(),
   },
-  stat: vi.fn(),
   readFile: vi.fn(),
+  stat: vi.fn(),
 }));
 
 vi.mock("~/lib/shared/paths", () => ({
@@ -29,15 +29,15 @@ describe("buildCaddyStatusPayload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSnapshot.mockResolvedValue({
-      connected: true,
-      lastError: null,
-      lastAttemptAt: null,
-      lastSuccessAt: null,
-      pendingChanges: false,
       caddyApiUrl: "http://localhost:2019",
+      connected: true,
+      lastAttemptAt: null,
+      lastError: null,
       lastManagedWriteAt: "2026-02-26T00:00:00.000Z",
       lastManagedWriteHash:
         "5c6c35d12723f2003e84b567446ebfbabfe8ff36a258a00b0985d62abddce1e3",
+      lastSuccessAt: null,
+      pendingChanges: false,
     });
   });
 

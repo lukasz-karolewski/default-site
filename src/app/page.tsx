@@ -19,5 +19,5 @@ export default async function Home() {
   }
 
   const sites = await getSites();
-  return <SiteGridPage sites={sites} baseDomain={config.baseDomain} />;
+  return <SiteGridPage baseDomain={config.baseDomain} sites={sites} />;
 }

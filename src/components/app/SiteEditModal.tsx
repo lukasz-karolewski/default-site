@@ -49,7 +49,7 @@ export default function SiteEditModal({
   site,
 }: SiteEditModalProps) {
   const { notify } = useNotice();
-  const initialState: SiteActionState = { ok: false, message: null };
+  const initialState: SiteActionState = { message: null, ok: false };
   const formKey = `${mode}:${site?.id ?? "new"}`;
   const [saveState, saveFormAction, savePending] = useActionState(
     saveSiteAction,
@@ -111,13 +111,13 @@ export default function SiteEditModal({
 
     try {
       const testResponse = await fetch("/api/sites/test-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: siteId ?? undefined,
           subdomain,
           upstream,
         }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       });
       const testData = await testResponse.json();
 
@@ -163,10 +163,10 @@ export default function SiteEditModal({
   const previewSrc = selectedFavicon || generateAvatarSvg(subdomainForAvatar);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        showCloseButton={false}
         className="max-h-[88vh] sm:max-w-md overflow-x-hidden overflow-y-auto"
+        showCloseButton={false}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -174,22 +174,22 @@ export default function SiteEditModal({
         </DialogHeader>
 
         <form
-          key={formKey}
-          id="site-save-form"
           action={saveFormAction}
           className="grid gap-3"
+          id="site-save-form"
+          key={formKey}
         >
-          <input type="hidden" name="id" value={site?.id ?? ""} />
-          <input type="hidden" name="favicon" value={selectedFavicon ?? ""} />
+          <input name="id" type="hidden" value={site?.id ?? ""} />
+          <input name="favicon" type="hidden" value={selectedFavicon ?? ""} />
 
           <div className="grid gap-1.5">
             <Label htmlFor="subdomain">Subdomain</Label>
             <Input
-              ref={subdomainRef}
+              defaultValue={site?.subdomain ?? ""}
               id="subdomain"
               name="subdomain"
               placeholder="app"
-              defaultValue={site?.subdomain ?? ""}
+              ref={subdomainRef}
               required
             />
           </div>
@@ -198,22 +198,22 @@ export default function SiteEditModal({
             <Label htmlFor="upstream">Redirect address</Label>
             <InputGroup>
               <InputGroupInput
-                ref={upstreamRef}
+                defaultValue={site?.upstream ?? ""}
                 id="upstream"
                 name="upstream"
                 placeholder="localhost:3000"
-                defaultValue={site?.upstream ?? ""}
+                ref={upstreamRef}
                 required
               />
               <InputGroupAddon align="inline-end" className="pr-0">
                 <InputGroupButton
+                  className="h-8 rounded-none border-0 border-l border-input px-2.5"
+                  disabled={detecting}
+                  onClick={handleDetectFavicon}
+                  size="sm"
+                  title="Detect favicon"
                   type="button"
                   variant="outline"
-                  size="sm"
-                  onClick={handleDetectFavicon}
-                  disabled={detecting}
-                  className="h-8 rounded-none border-0 border-l border-input px-2.5"
-                  title="Detect favicon"
                 >
                   {detecting ? (
                     <Loader2Icon className="size-3.5 animate-spin" />
@@ -235,20 +235,21 @@ export default function SiteEditModal({
                     const isSelected = selectedFavicon === favicon;
                     return (
                       <button
-                        key={favicon}
-                        type="button"
-                        onClick={() => setSelectedFavicon(favicon)}
-                        title={favicon}
                         className={`relative flex size-10 items-center justify-center rounded border bg-white p-1 transition-colors ${
                           isSelected
                             ? "border-foreground ring-1 ring-foreground"
                             : "border-input hover:border-foreground/40"
                         }`}
+                        key={favicon}
+                        onClick={() => setSelectedFavicon(favicon)}
+                        title={favicon}
+                        type="button"
                       >
+                        {/* biome-ignore lint/performance/noImgElement: Favicon candidates come from arbitrary upstream URLs and data URIs, so next/image is not safe here without broad remote host configuration. */}
                         <img
-                          src={favicon}
                           alt=""
                           className="size-6 object-contain"
+                          src={favicon}
                         />
                         {isSelected && (
                           <span className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-foreground text-background">
@@ -266,15 +267,15 @@ export default function SiteEditModal({
                       : "Select a favicon"}
                   </span>
                   <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
+                    aria-label="Clear favicon"
+                    className="h-auto shrink-0 px-1.5 py-0.5 text-xs"
                     onClick={() => {
                       setDetectedFavicons([]);
                       setSelectedFavicon(null);
                     }}
-                    aria-label="Clear favicon"
-                    className="h-auto shrink-0 px-1.5 py-0.5 text-xs"
+                    size="sm"
+                    type="button"
+                    variant="ghost"
                   >
                     <XIcon className="size-3" />
                     Clear
@@ -283,11 +284,12 @@ export default function SiteEditModal({
               </div>
             ) : (
               <div className="flex items-center gap-3">
+                {/* biome-ignore lint/performance/noImgElement: This preview may be an arbitrary upstream favicon URL or a generated data URI fallback. */}
                 <img
-                  src={previewSrc}
                   alt=""
                   aria-hidden="true"
                   className="size-8 rounded object-contain"
+                  src={previewSrc}
                 />
                 <span className="text-xs text-muted-foreground">
                   {detectError ?? "Auto-generated avatar. Hit Test to detect."}
@@ -298,32 +300,32 @@ export default function SiteEditModal({
         </form>
 
         {mode === "edit" && site ? (
-          <form id="site-delete-form" action={deleteFormAction}>
-            <input type="hidden" name="id" value={site.id} />
+          <form action={deleteFormAction} id="site-delete-form">
+            <input name="id" type="hidden" value={site.id} />
           </form>
         ) : null}
 
         <DialogFooter className="mt-2 flex flex-row items-center justify-end gap-2">
           {mode === "edit" && site ? (
             <Button
-              variant="destructive"
-              type="submit"
-              form="site-delete-form"
-              disabled={deletePending || savePending}
               className="mr-auto"
+              disabled={deletePending || savePending}
+              form="site-delete-form"
+              type="submit"
+              variant="destructive"
             >
               {deletePending ? "Deleting..." : "Delete"}
             </Button>
           ) : null}
 
           <Button
-            type="submit"
-            form="site-save-form"
             disabled={savePending || deletePending}
+            form="site-save-form"
+            type="submit"
           >
             {savePending ? "Saving..." : mode === "add" ? "Add" : "Save"}
           </Button>
-          <DialogClose render={<Button variant="outline" type="button" />}>
+          <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>
         </DialogFooter>

@@ -13,12 +13,12 @@ interface CaddyStatus {
 }
 
 const DEFAULT_STATUS: CaddyStatus = {
+  caddyApiUrl: "",
   connected: true,
-  lastError: null,
   lastAttemptAt: null,
+  lastError: null,
   lastSuccessAt: null,
   pendingChanges: false,
-  caddyApiUrl: "",
 };
 
 export default function CaddyStatusPanel() {
@@ -55,8 +55,8 @@ export default function CaddyStatusPanel() {
     setRetrying(true);
     try {
       await fetch("/api/status/caddy/retry", {
-        method: "POST",
         headers: { "Content-Type": "application/json" },
+        method: "POST",
       });
       await fetchStatus();
     } finally {
@@ -100,16 +100,16 @@ export default function CaddyStatusPanel() {
             </p>
           )}
           <button
-            type="button"
-            onClick={retrySyncNow}
-            disabled={retrying}
             className="mt-4 border-2 border-black bg-black px-3 py-2 text-sm font-black uppercase tracking-widest text-white transition hover:bg-zinc-800 disabled:opacity-60"
+            disabled={retrying}
+            onClick={retrySyncNow}
+            type="button"
           >
             {retrying ? "Retrying..." : "Retry sync now"}
           </button>
           <a
-            href="/onboarding?edit=1"
             className="ml-2 mt-4 inline-flex border-2 border-black bg-white px-3 py-2 text-sm font-black uppercase tracking-widest text-zinc-900 transition hover:bg-zinc-100"
+            href="/onboarding?edit=1"
           >
             Update onboarding settings
           </a>

@@ -22,7 +22,7 @@ export default function SiteCrud({
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <CaddyStatusPanel />
-        <PublishedSitesPanel sites={sites} baseDomain={baseDomain} />
+        <PublishedSitesPanel baseDomain={baseDomain} sites={sites} />
       </div>
 
       <ManageSitesPanel editingSite={editingSite} notice={notice} />

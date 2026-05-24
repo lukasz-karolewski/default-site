@@ -17,9 +17,9 @@ describe("POST /api/sites/test-config", () => {
   it("validates required fields", async () => {
     const response = await POST(
       new Request("http://localhost/api/sites/test-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subdomain: "", upstream: "" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       }),
     );
 
@@ -31,20 +31,20 @@ describe("POST /api/sites/test-config", () => {
 
   it("applies a preview config without persisting", async () => {
     mockPreviewSiteInCaddy.mockResolvedValue({
-      ok: true,
       error: null,
+      ok: true,
       status: 200,
     });
 
     const response = await POST(
       new Request("http://localhost/api/sites/test-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: "site-1",
           subdomain: "App",
           upstream: "localhost:3000",
         }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       }),
     );
 

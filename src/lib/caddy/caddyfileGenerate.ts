@@ -73,8 +73,8 @@ export async function generateCaddyfile(
 
   const managedBlock = buildManagedSiteBlock({
     baseDomain: siteConfig.baseDomain,
-    siteBlockDirectives: siteConfig.siteBlockDirectives,
     dashboardUpstream: siteConfig.dashboardUpstream,
+    siteBlockDirectives: siteConfig.siteBlockDirectives,
     sites,
   });
 

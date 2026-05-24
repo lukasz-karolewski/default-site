@@ -52,12 +52,12 @@ describe("previewSiteInCaddy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSites.mockResolvedValue([
-      { id: "1", subdomain: "api", upstream: "localhost:4000", favicon: null },
+      { favicon: null, id: "1", subdomain: "api", upstream: "localhost:4000" },
     ]);
     mockGenerateCaddyfile.mockResolvedValue("preview-config");
     mockApplyCaddyfileToCaddyApi.mockResolvedValue({
-      ok: true,
       error: null,
+      ok: true,
       status: 200,
     });
   });
