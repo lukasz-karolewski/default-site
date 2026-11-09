@@ -66,11 +66,11 @@ If sync fails:
 
 ## Environment variables
 
-| Variable              | Default                         | Description |
-|-----------------------|---------------------------------|-------------|
-| `CADDY_RETRY_SECONDS` | `10`                            | Retry interval when sync is pending |
-| `CADDYFILE_PATH`      | `/app/Caddyfile`                | Path to generated Caddyfile |
-| `DB_PATH`             | `/app/data/sites.db`            | SQLite database path |
+| Variable              | Default              | Description                         |
+| --------------------- | -------------------- | ----------------------------------- |
+| `CADDY_RETRY_SECONDS` | `10`                 | Retry interval when sync is pending |
+| `CADDYFILE_PATH`      | `/app/Caddyfile`     | Path to generated Caddyfile         |
+| `DB_PATH`             | `/app/data/sites.db` | SQLite database path                |
 
 ## Development
 
