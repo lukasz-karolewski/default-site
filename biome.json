@@ -18,7 +18,13 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["*", "**/*", "!src/components/ui/**/*"]
+    "includes": [
+      "*",
+      "**/*",
+      "!src/components/ui/**/*",
+      "!.agents",
+      "!.claude/skills"
+    ]
   },
   "formatter": {
     "enabled": true,
